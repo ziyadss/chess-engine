@@ -191,22 +191,16 @@ namespace chess
         }
 
         template<Piece P>
-        [[nodiscard]] bitboard_t consteval static blockerMask(File f, Rank r)
+        [[nodiscard]] bitboard_t consteval static blockerMask(File f, Rank r) noexcept
         {
             constexpr const bitboard_t borders = file(File::A) | file(File::H) | rank(Rank::One) | rank(Rank::Eight);
 
-            switch (P)
-            {
-                case WRook:
-                case BRook:
-                    return s_rookMoves[f][r] & ~borders;
-                case WBishop:
-                case BBishop:
-                    return s_bishopMoves[f][r] & ~borders;
-                case WQueen:
-                case BQueen:
-                    return s_queenMoves[f][r] & ~borders;
-            }
+            if constexpr (P == WRook || P == BRook)
+                return s_rookMoves[f][r] & ~borders;
+            else if constexpr (P == WBishop || P == BBishop)
+                return s_bishopMoves[f][r] & ~borders;
+            else if constexpr (P == WQueen || P == BQueen)
+                return s_queenMoves[f][r] & ~borders;
         }
 
         template<Piece P>
