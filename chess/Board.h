@@ -195,11 +195,11 @@ namespace chess
         {
             constexpr const bitboard_t borders = file(File::A) | file(File::H) | rank(Rank::One) | rank(Rank::Eight);
 
-            if constexpr (P == WRook || P == BRook)
+            if constexpr (P == Piece::WRook || P == Piece::BRook)
                 return s_rookMoves[f][r] & ~borders;
-            else if constexpr (P == WBishop || P == BBishop)
+            else if constexpr (P == Piece::WBishop || P == Piece::BBishop)
                 return s_bishopMoves[f][r] & ~borders;
-            else if constexpr (P == WQueen || P == BQueen)
+            else if constexpr (P == Piece::WQueen || P == Piece::BQueen)
                 return s_queenMoves[f][r] & ~borders;
         }
 
