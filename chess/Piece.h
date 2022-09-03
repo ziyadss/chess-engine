@@ -3,13 +3,20 @@
 
 namespace chess
 {
+    enum Color { White = 0, Black = 8 };
+
     enum Piece
     {
-        WPawn, WRook, WKnight, WBishop, WQueen, WKing, BPawn, BRook, BKnight, BBishop, BQueen, BKing,
+        WPawn = 1,
 
-        White, Black,
+        WKnight, WRook, WBishop, WQueen, WKing,
 
-        None
+        None,
+
+        BPawn = WPawn + Black,
+
+        BKnight, BRook, BBishop, BQueen, BKing,
+
     };
 } // namespace chess
 
