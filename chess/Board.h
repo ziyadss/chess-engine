@@ -15,12 +15,12 @@ namespace chess
     public:
         using bitboard_t = uint64_t;
         static_assert(sizeof(bitboard_t) == 8, "bitboard_t must be 64 bits");
-        consteval Board() noexcept: m_bitboards(s_startingPosition) {}
-        consteval explicit Board(const std::string &fenString) { fen(fenString); }
+        constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
+        constexpr explicit Board(const char* fenString) { fen(fenString); }
 
         [[nodiscard]] consteval static bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
 
-        [[nodiscard]] std::string fen()
+        [[nodiscard]] std::string fen() const
         {
             auto ss = std::ostringstream();
             int emptyCount = 0;
@@ -61,7 +61,7 @@ namespace chess
             return ss.str();
         }
 
-        void fen(const std::string &fenString)
+        void constexpr fen(const char* fenString)
         {
             m_bitboards = std::array<bitboard_t, 14>{};
             int sqr = 63;
