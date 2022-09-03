@@ -3,7 +3,6 @@
 
 #include <array>
 #include <sstream>
-#include <cassert>
 
 #include "Piece.h"
 #include "File.h"
@@ -17,7 +16,7 @@ namespace chess
         using bitboard_t = uint64_t;
         static_assert(sizeof(bitboard_t) == 8, "bitboard_t must be 64 bits");
         constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
-        constexpr explicit Board(const char *fenString) { fen(fenString); }
+        constexpr explicit Board(const char *fenString) { set(fenString); }
 
         [[nodiscard]] consteval static bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
 
@@ -62,7 +61,7 @@ namespace chess
             return ss.str();
         }
 
-        void constexpr fen(const char *fenString)
+        void constexpr set(const char *fenString)
         {
             m_bitboards = std::array<bitboard_t, 15>{};
             int sqr = 63;
