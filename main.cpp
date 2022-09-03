@@ -4,7 +4,8 @@
 
 int main()
 {
-    auto board = chess::Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    auto fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    auto board = chess::Board(fen);
 
-    std::cout << board.fen();
+    std::cout << fen << std::endl << board.fen() << std::endl;
 }

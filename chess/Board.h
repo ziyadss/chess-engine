@@ -246,8 +246,8 @@ namespace chess
                                                                   Piece::WKing, Piece::BPawn, Piece::BRook, Piece::BKnight, Piece::BBishop,
                                                                   Piece::BQueen, Piece::BKing};
 
-        constexpr const static std::array<char, 15> s_pieceChars = {'P', 'R', 'N', 'B', 'Q', 'K', 'p', 'r', 'n', 'b', 'q', 'k', 'w', 'b',
-                                                                    '.'};
+        constexpr const static std::array<char, 15> s_pieceChars = {'w', 'P', 'N', 'R', 'B', 'Q', 'K', '.', 'b', 'p', 'n', 'r', 'b', 'q',
+                                                                    'k'};
 
         constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_squares{
                 {{0x0000000000000080, 0x0000000000008000, 0x0000000000800000, 0x0000000080000000, 0x0000008000000000, 0x0000800000000000,
