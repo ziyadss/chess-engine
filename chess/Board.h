@@ -168,7 +168,7 @@ namespace chess
             ss << std::hex << std::showbase << bits << std::endl;
             for (int i = 7; i >= 0; i--)
             {
-                for (int j = 0; j <= 7; j++)
+                for (int j = 7; j >= 0; j--)
                     ss << ((bits & (1ULL << (i * 8 + j))) ? 'X' : '.');
                 ss << '\n';
             }
