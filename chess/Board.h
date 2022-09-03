@@ -118,8 +118,8 @@ namespace chess
 
             // TODO: Castling rights
             // TODO: En passant square
-            // TODO: Halfmove clock
-            // TODO: Fullmove number
+            // TODO: Half-move clock
+            // TODO: Full-move number
         }
         [[nodiscard]] std::string fen()
         {
@@ -157,8 +157,8 @@ namespace chess
 
             // TODO: Castling rights
             // TODO: En passant square
-            // TODO: Halfmove clock
-            // TODO: Fullmove number
+            // TODO: Half-move clock
+            // TODO: Full-move number
             return ss.str();
         }
 
