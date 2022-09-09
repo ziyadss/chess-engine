@@ -767,23 +767,23 @@ namespace chess
         {
             if constexpr (C == Color::White)
             {
-                // Checking if this square is attacked by white pieces. (i.e. I'm black)
-                auto occupied = all();
-                return (pawnAttacks<Color::White>(f, r) & m_bitboards[Piece::BPawn]) |
-                       (rookMoves(f, r, occupied) & m_bitboards[Piece::BRook]) |
-                       (knightMoves<Color::White>(f, r) & m_bitboards[Piece::BKnight]) |
-                       (bishopMoves(f, r, occupied) & m_bitboards[Piece::BBishop]) |
-                       (kingMoves<Color::White>(f, r) & m_bitboards[Piece::BKing]);
-            }
-            else
-            {
-                // Checking if this square is attacked by black pieces. (i.e. I'm white)
+                // Checking if this square is attacked by white pieces.
                 auto occupied = all();
                 return (pawnAttacks<Color::Black>(f, r) & m_bitboards[Piece::WPawn]) |
                        (rookMoves(f, r, occupied) & m_bitboards[Piece::WRook]) |
                        (knightMoves<Color::Black>(f, r) & m_bitboards[Piece::WKnight]) |
                        (bishopMoves(f, r, occupied) & m_bitboards[Piece::WBishop]) |
                        (kingMoves<Color::Black>(f, r) & m_bitboards[Piece::WKing]);
+            }
+            else
+            {
+                // Checking if this square is attacked by black pieces.
+                auto occupied = all();
+                return (pawnAttacks<Color::White>(f, r) & m_bitboards[Piece::BPawn]) |
+                       (rookMoves(f, r, occupied) & m_bitboards[Piece::BRook]) |
+                       (knightMoves<Color::White>(f, r) & m_bitboards[Piece::BKnight]) |
+                       (bishopMoves(f, r, occupied) & m_bitboards[Piece::BBishop]) |
+                       (kingMoves<Color::White>(f, r) & m_bitboards[Piece::BKing]);
             }
         }
     };
