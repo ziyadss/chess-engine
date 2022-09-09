@@ -12,166 +12,18 @@ namespace chess
 {
     class Board
     {
-    public:
         using bitboard_t = uint64_t;
         static_assert(sizeof(bitboard_t) == 8, "bitboard_t must be 64 bits");
-        constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
-        constexpr explicit Board(const char *fenString) { set(fenString); }
 
-        [[nodiscard]] consteval static bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
-
-        [[nodiscard]] std::string fen() const
-        {
-            auto ss = std::ostringstream();
-            int emptyCount = 0;
-            for (auto idx = 63; idx >= 0; idx--)
-            {
-                auto p = piece(square(idx));
-
-                bool empty = p == Piece::None;
-                emptyCount += empty;
-
-                bool endRank = idx % 8 == 0;
-                bool printEmpty = ((!empty || endRank) && emptyCount > 0);
-
-                if (printEmpty)
-                {
-                    ss << emptyCount;
-                    emptyCount = 0;
-                }
-
-                if (!empty)
-                {
-                    ss << s_pieceChars[p];
-                }
-
-                if (endRank && idx != 0)
-                {
-                    ss << '/';
-                }
-
-            }
-            ss << ' ';
-            ss << s_pieceChars[m_turn];
-
-            // TODO: Castling rights
-            // TODO: En passant square
-            // TODO: Half-move clock
-            // TODO: Full-move number
-            return ss.str();
-        }
-
-        void constexpr set(const char *fenString)
-        {
-            m_bitboards = std::array<bitboard_t, 15>{};
-            int sqr = 63;
-            size_t fenIdx = 0;
-            while (fenString[fenIdx] != ' ')
-            {
-                switch (fenString[fenIdx++])
-                {
-                    case 'r':
-                        m_bitboards[Piece::BRook] |= square(sqr--);
-                        break;
-                    case 'n':
-                        m_bitboards[Piece::BKnight] |= square(sqr--);
-                        break;
-                    case 'b':
-                        m_bitboards[Piece::BBishop] |= square(sqr--);
-                        break;
-                    case 'q':
-                        m_bitboards[Piece::BQueen] |= square(sqr--);
-                        break;
-                    case 'k':
-                        m_bitboards[Piece::BKing] |= square(sqr--);
-                        break;
-                    case 'p':
-                        m_bitboards[Piece::BPawn] |= square(sqr--);
-                        break;
-                    case 'R':
-                        m_bitboards[Piece::WRook] |= square(sqr--);
-                        break;
-                    case 'N':
-                        m_bitboards[Piece::WKnight] |= square(sqr--);
-                        break;
-                    case 'B':
-                        m_bitboards[Piece::WBishop] |= square(sqr--);
-                        break;
-                    case 'Q':
-                        m_bitboards[Piece::WQueen] |= square(sqr--);
-                        break;
-                    case 'K':
-                        m_bitboards[Piece::WKing] |= square(sqr--);
-                        break;
-                    case 'P':
-                        m_bitboards[Piece::WPawn] |= square(sqr--);
-                        break;
-                    case '/':
-                        break;
-                    case '1':
-                        sqr -= 1;
-                        break;
-                    case '2':
-                        sqr -= 2;
-                        break;
-                    case '3':
-                        sqr -= 3;
-                        break;
-                    case '4':
-                        sqr -= 4;
-                        break;
-                    case '5':
-                        sqr -= 5;
-                        break;
-                    case '6':
-                        sqr -= 6;
-                        break;
-                    case '7':
-                        sqr -= 7;
-                        break;
-                    case '8':
-                        sqr -= 8;
-                        break;
-                }
-            }
-
-            m_bitboards[Color::White] =
-                    m_bitboards[Piece::WPawn] | m_bitboards[Piece::WRook] | m_bitboards[Piece::WKnight] | m_bitboards[Piece::WBishop] |
-                    m_bitboards[Piece::WQueen] | m_bitboards[Piece::WKing];
-
-            m_bitboards[Color::Black] =
-                    m_bitboards[Piece::BPawn] | m_bitboards[Piece::BRook] | m_bitboards[Piece::BKnight] | m_bitboards[Piece::BBishop] |
-                    m_bitboards[Piece::BQueen] | m_bitboards[Piece::BKing];
-
-            m_turn = fenString[++fenIdx] == 'w' ? Color::White : Color::Black;
-
-            // TODO: Castling rights
-            // TODO: En passant square
-            // TODO: Half-move clock
-            // TODO: Full-move number
-        }
-
-        [[nodiscard]] consteval Color turn() const noexcept { return m_turn; }
-
-        [[nodiscard]] consteval bitboard_t moves(File f, Rank r)
-        {
-            auto p = piece(f, r);
-
-            // TODO
-
-            return 0;
-        }
-
-    private:
         std::array<bitboard_t, 15> m_bitboards{};
         Color m_turn = Color::White;
 
-        [[nodiscard]] consteval bitboard_t white() const noexcept { return m_bitboards[Color::White]; }
-        [[nodiscard]] consteval bitboard_t black() const noexcept { return m_bitboards[Color::Black]; }
+        [[nodiscard]] constexpr bitboard_t white() const noexcept { return m_bitboards[Color::White]; }
+        [[nodiscard]] constexpr bitboard_t black() const noexcept { return m_bitboards[Color::Black]; }
 
-        [[nodiscard]] consteval bitboard_t all() const noexcept { return ~empty(); }
-        [[nodiscard]] consteval bitboard_t empty() const noexcept { return m_bitboards[Piece::None]; }
-        [[nodiscard]] consteval Piece piece(File f, Rank r) const noexcept { return piece(square(f, r)); }
+        [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~empty(); }
+        [[nodiscard]] constexpr bitboard_t empty() const noexcept { return m_bitboards[Piece::None]; }
+        [[nodiscard]] constexpr Piece piece(File f, Rank r) const noexcept { return piece(square(f, r)); }
         [[nodiscard]] constexpr Piece piece(bitboard_t square) const noexcept
         {
             for (const Piece &p: s_piecesList)
@@ -181,44 +33,55 @@ namespace chess
             return Piece::None;
         }
 
-        [[nodiscard]] consteval bitboard_t attacking(File f, Rank r) const noexcept
-        {
-            auto occupied = all();
-            // TODO
-            return 0;
-        }
-
         [[nodiscard]] static constexpr bitboard_t square(int index) noexcept { return s_squares[7 - (index & 7)][index >> 3]; }
 
         template<Piece P>
-        [[nodiscard]] consteval bitboard_t moves(File f, Rank r)
+        [[nodiscard]] constexpr bitboard_t moves(File f, Rank r) const noexcept
         {
-            // WPawn, WRook, WKnight, WBishop, WQueen, WKing, BPawn, BRook, BKnight, BBishop, BQueen, BKing
             if constexpr (P == Piece::WPawn) return pawnMoves<Color::White>(f, r);
-            if constexpr (P == Piece::WRook) return rookMoves(f, r, all()) & ~white();
-            if constexpr (P == Piece::WKnight) return s_knightMoves[f][r] & ~white();
-            if constexpr (P == Piece::WBishop) return bishopMoves(f, r, all()) & ~white();
-            if constexpr (P == Piece::WQueen) return queenMoves(f, r, all()) & ~white();
-            if constexpr (P == Piece::WKing) return s_kingMoves[f][r] & ~white();
+            if constexpr (P == Piece::WRook) return rookMoves<Color::White>(f, r, all());
+            if constexpr (P == Piece::WKnight) return knightMoves<Color::White>(f, r);
+            if constexpr (P == Piece::WBishop) return bishopMoves<Color::White>(f, r, all());
+            if constexpr (P == Piece::WQueen) return queenMoves<Color::White>(f, r, all());
+            if constexpr (P == Piece::WKing) return kingMoves<Color::White>(f, r);
 
             if constexpr (P == Piece::BPawn) return pawnMoves<Color::Black>(f, r);
-            if constexpr (P == Piece::BRook) return rookMoves(f, r, all()) & ~black();
-            if constexpr (P == Piece::BKnight) return s_knightMoves[f][r] & ~black();
-            if constexpr (P == Piece::BBishop) return bishopMoves(f, r, all()) & ~black();
-            if constexpr (P == Piece::BQueen) return queenMoves(f, r, all()) & ~black();
-            if constexpr (P == Piece::BKing) return s_kingMoves[f][r] & ~black();
+            if constexpr (P == Piece::BRook) return rookMoves<Color::Black>(f, r, all());
+            if constexpr (P == Piece::BKnight) return knightMoves<Color::Black>(f, r);
+            if constexpr (P == Piece::BBishop) return bishopMoves<Color::Black>(f, r, all());
+            if constexpr (P == Piece::BQueen) return queenMoves<Color::Black>(f, r, all());
+            if constexpr (P == Piece::BKing) return kingMoves<Color::Black>(f, r);
 
         }
 
         template<Color C>
-        [[nodiscard]] consteval bitboard_t pawnMoves(File f, Rank r)
+        [[nodiscard]] constexpr bitboard_t pawnAttacks(File f, Rank r) const noexcept
         {
-            if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & black()) | (s_wPawnMoves[f][r] & empty());
-            if constexpr (C == Color::Black) return (s_bPawnAttacks[f][r] & white()) | (s_bPawnMoves[f][r] & empty());
+            if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & black());
+            if constexpr (C == Color::Black) return (s_bPawnAttacks[f][r] & white());
+        }
+
+        template<Color C>
+        [[nodiscard]] constexpr bitboard_t pawnMoves(File f, Rank r) const noexcept
+        {
+            if constexpr (C == Color::White) return pawnAttacks<Color::White>(f, r) | (s_wPawnMoves[f][r] & empty());
+            if constexpr (C == Color::Black) return pawnAttacks<Color::Black>(f, r) | (s_bPawnMoves[f][r] & empty());
+        }
+
+        template<Color C>
+        [[nodiscard]] constexpr bitboard_t knightMoves(File f, Rank r) const noexcept
+        {
+            return s_knightMoves[f][r] & ~m_bitboards[C];
+        }
+
+        template<Color C>
+        [[nodiscard]] constexpr bitboard_t kingMoves(File f, Rank r) const noexcept
+        {
+            return s_kingMoves[f][r] & ~m_bitboards[C];
         }
 
         struct SquareRays { bitboard_t lower, upper, line; };
-        [[nodiscard]] static consteval bitboard_t lineAttacks(bitboard_t occupancy, const SquareRays &rays)
+        [[nodiscard]] static constexpr bitboard_t lineAttacks(bitboard_t occupancy, const SquareRays &rays) noexcept
         {
             bitboard_t lower = rays.lower & occupancy;
             bitboard_t upper = rays.upper & occupancy;
@@ -227,21 +90,40 @@ namespace chess
             return rays.line & diff;
         }
 
-        [[nodiscard]] static consteval bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy)
+        template<Color C>
+        [[nodiscard]] constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) const noexcept
+        {
+            return rookMoves(f, r, occupancy) & ~m_bitboards[C];
+        }
+
+        template<Color C>
+        [[nodiscard]] constexpr bitboard_t bishopMoves(File f, Rank r, bitboard_t occupancy) const noexcept
+        {
+            return bishopMoves(f, r, occupancy) & ~m_bitboards[C];
+        }
+
+        template<Color C>
+        [[nodiscard]] constexpr bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy) const noexcept
+        {
+            return queenMoves(f, r, occupancy) & ~m_bitboards[C];
+        }
+
+        [[nodiscard]] static constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) noexcept
         {
             return lineAttacks(occupancy, s_fileRays[f][r]) | lineAttacks(occupancy, s_rankRays[f][r]);
         }
 
-        [[nodiscard]] static consteval bitboard_t bishopMoves(File f, Rank r, bitboard_t occupancy)
+        [[nodiscard]] static constexpr bitboard_t bishopMoves(File f, Rank r, bitboard_t occupancy) noexcept
         {
             return lineAttacks(occupancy, s_diagonalRays[f][r]) | lineAttacks(occupancy, s_antidiagonalRays[f][r]);
         }
 
-        [[nodiscard]] static consteval bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy)
+        [[nodiscard]] static constexpr bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy) noexcept
         {
             return rookMoves(f, r, occupancy) | bishopMoves(f, r, occupancy);
         }
 
+        constexpr static const bitboard_t s_emptyBoard = 0;
         constexpr static const std::array<Piece, 12> s_piecesList{Piece::WPawn, Piece::WRook, Piece::WKnight, Piece::WBishop, Piece::WQueen,
                                                                   Piece::WKing, Piece::BPawn, Piece::BRook, Piece::BKnight, Piece::BBishop,
                                                                   Piece::BQueen, Piece::BKing};
@@ -274,40 +156,40 @@ namespace chess
                                                                              0x2400000000000000, 0x1000000000000000, 0x8000000000000000};
 
         constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_wPawnMoves{
-                {{0x0000000000008000, 0x0000000000800000, 0x0000000080000000, 0x0000008000000000, 0x0000800000000000, 0x0080000000000000,
+                {{0x0000000000008000, 0x0000000080800000, 0x0000000080000000, 0x0000008000000000, 0x0000800000000000, 0x0080000000000000,
                   0x8000000000000000, 0x0000000000000000},
-                 {0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000, 0x0000400000000000, 0x0040000000000000,
+                 {0x0000000000004000, 0x0000000040400000, 0x0000000040000000, 0x0000004000000000, 0x0000400000000000, 0x0040000000000000,
                   0x4000000000000000, 0x0000000000000000},
-                 {0x0000000000002000, 0x0000000000200000, 0x0000000020000000, 0x0000002000000000, 0x0000200000000000, 0x0020000000000000,
+                 {0x0000000000002000, 0x0000000020200000, 0x0000000020000000, 0x0000002000000000, 0x0000200000000000, 0x0020000000000000,
                   0x2000000000000000, 0x0000000000000000},
-                 {0x0000000000001000, 0x0000000000100000, 0x0000000010000000, 0x0000001000000000, 0x0000100000000000, 0x0010000000000000,
+                 {0x0000000000001000, 0x0000000010100000, 0x0000000010000000, 0x0000001000000000, 0x0000100000000000, 0x0010000000000000,
                   0x1000000000000000, 0x0000000000000000},
-                 {0x0000000000000800, 0x0000000000080000, 0x0000000008000000, 0x0000000800000000, 0x0000080000000000, 0x0008000000000000,
+                 {0x0000000000000800, 0x0000000008080000, 0x0000000008000000, 0x0000000800000000, 0x0000080000000000, 0x0008000000000000,
                   0x0800000000000000, 0x0000000000000000},
-                 {0x0000000000000400, 0x0000000000040000, 0x0000000004000000, 0x0000000400000000, 0x0000040000000000, 0x0004000000000000,
+                 {0x0000000000000400, 0x0000000004040000, 0x0000000004000000, 0x0000000400000000, 0x0000040000000000, 0x0004000000000000,
                   0x0400000000000000, 0x0000000000000000},
-                 {0x0000000000000200, 0x0000000000020000, 0x0000000002000000, 0x0000000200000000, 0x0000020000000000, 0x0002000000000000,
+                 {0x0000000000000200, 0x0000000002020000, 0x0000000002000000, 0x0000000200000000, 0x0000020000000000, 0x0002000000000000,
                   0x0200000000000000, 0x0000000000000000},
-                 {0x0000000000000100, 0x0000000000010000, 0x0000000001000000, 0x0000000100000000, 0x0000010000000000, 0x0001000000000000,
+                 {0x0000000000000100, 0x0000000001010000, 0x0000000001000000, 0x0000000100000000, 0x0000010000000000, 0x0001000000000000,
                   0x0100000000000000, 0x0000000000000000}}};
 
         constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_bPawnMoves{
                 {{0x0000000000000000, 0x0000000000000080, 0x0000000000008000, 0x0000000000800000, 0x0000000080000000, 0x0000008000000000,
-                  0x0000800000000000, 0x0080000000000000},
+                  0x0000808000000000, 0x0080000000000000},
                  {0x0000000000000000, 0x0000000000000040, 0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000,
-                  0x0000400000000000, 0x0040000000000000},
+                  0x0000404000000000, 0x0040000000000000},
                  {0x0000000000000000, 0x0000000000000020, 0x0000000000002000, 0x0000000000200000, 0x0000000020000000, 0x0000002000000000,
-                  0x0000200000000000, 0x0020000000000000},
+                  0x0000202000000000, 0x0020000000000000},
                  {0x0000000000000000, 0x0000000000000010, 0x0000000000001000, 0x0000000000100000, 0x0000000010000000, 0x0000001000000000,
-                  0x0000100000000000, 0x0010000000000000},
+                  0x0000101000000000, 0x0010000000000000},
                  {0x0000000000000000, 0x0000000000000008, 0x0000000000000800, 0x0000000000080000, 0x0000000008000000, 0x0000000800000000,
-                  0x0000080000000000, 0x0008000000000000},
+                  0x0000080800000000, 0x0008000000000000},
                  {0x0000000000000000, 0x0000000000000004, 0x0000000000000400, 0x0000000000040000, 0x0000000004000000, 0x0000000400000000,
-                  0x0000040000000000, 0x0004000000000000},
+                  0x0000040400000000, 0x0004000000000000},
                  {0x0000000000000000, 0x0000000000000002, 0x0000000000000200, 0x0000000000020000, 0x0000000002000000, 0x0000000200000000,
-                  0x0000020000000000, 0x0002000000000000},
+                  0x0000020200000000, 0x0002000000000000},
                  {0x0000000000000000, 0x0000000000000001, 0x0000000000000100, 0x0000000000010000, 0x0000000001000000, 0x0000000100000000,
-                  0x0000010000000000, 0x0001000000000000}}};
+                  0x0000010100000000, 0x0001000000000000}}};
 
         constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_wPawnAttacks{
                 {{0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000, 0x0000400000000000, 0x0040000000000000,
@@ -418,22 +300,22 @@ namespace chess
                   0x03FE030509112141, 0xFE03050911214181}}};
 
         constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_kingMoves{
-                {{0x0000000000008040, 0x0000000000804080, 0x0000000080408000, 0x0000008040800000, 0x0000804080000000, 0x0080408000000000,
-                  0x8040800000000000, 0x4080000000000000},
-                 {0x00000000000040A0, 0x000000000040A040, 0x0000000040A04000, 0x00000040A0400000, 0x000040A040000000, 0x0040A04000000000,
-                  0x40A0400000000000, 0xA040000000000000},
-                 {0x0000000000002050, 0x0000000000205020, 0x0000000020502000, 0x0000002050200000, 0x0000205020000000, 0x0020502000000000,
-                  0x2050200000000000, 0x5020000000000000},
-                 {0x0000000000001028, 0x0000000000102810, 0x0000000010281000, 0x0000001028100000, 0x0000102810000000, 0x0010281000000000,
-                  0x1028100000000000, 0x2810000000000000},
-                 {0x0000000000000814, 0x0000000000081408, 0x0000000008140800, 0x0000000814080000, 0x0000081408000000, 0x0008140800000000,
-                  0x0814080000000000, 0x1408000000000000},
-                 {0x000000000000040A, 0x0000000000040A04, 0x00000000040A0400, 0x000000040A040000, 0x0000040A04000000, 0x00040A0400000000,
-                  0x040A040000000000, 0x0A04000000000000},
-                 {0x0000000000000205, 0x0000000000020502, 0x0000000002050200, 0x0000000205020000, 0x0000020502000000, 0x0002050200000000,
-                  0x0205020000000000, 0x0502000000000000},
-                 {0x0000000000000102, 0x0000000000010201, 0x0000000001020100, 0x0000000102010000, 0x0000010201000000, 0x0001020100000000,
-                  0x0102010000000000, 0x0201000000000000}}};
+                {{0x000000000000C040, 0x0000000000C040C0, 0x00000000C040C000, 0x000000C040C00000, 0x0000C040C0000000, 0x00C040C000000000,
+                  0xC040C00000000000, 0x40C0000000000000},
+                 {0x000000000000E0A0, 0x0000000000E0A0E0, 0x00000000E0A0E000, 0x000000E0A0E00000, 0x0000E0A0E0000000, 0x00E0A0E000000000,
+                  0xE0A0E00000000000, 0xA0E0000000000000},
+                 {0x0000000000007050, 0x0000000000705070, 0x0000000070507000, 0x0000007050700000, 0x0000705070000000, 0x0070507000000000,
+                  0x7050700000000000, 0x5070000000000000},
+                 {0x0000000000003828, 0x0000000000382838, 0x0000000038283800, 0x0000003828380000, 0x0000382838000000, 0x0038283800000000,
+                  0x3828380000000000, 0x2838000000000000},
+                 {0x0000000000001C14, 0x00000000001C141C, 0x000000001C141C00, 0x0000001C141C0000, 0x00001C141C000000, 0x001C141C00000000,
+                  0x1C141C0000000000, 0x141C000000000000},
+                 {0x0000000000000E0A, 0x00000000000E0A0E, 0x000000000E0A0E00, 0x0000000E0A0E0000, 0x00000E0A0E000000, 0x000E0A0E00000000,
+                  0x0E0A0E0000000000, 0x0A0E000000000000},
+                 {0x0000000000000705, 0x0000000000070507, 0x0000000007050700, 0x0000000705070000, 0x0000070507000000, 0x0007050700000000,
+                  0x0705070000000000, 0x0507000000000000},
+                 {0x0000000000000302, 0x0000000000030203, 0x0000000003020300, 0x0000000302030000, 0x0000030203000000, 0x0003020300000000,
+                  0x0302030000000000, 0x0203000000000000}}};
 
         static constexpr const std::array<const std::array<const SquareRays, 8>, 8> s_fileRays{
                 {{SquareRays{0x0000000000000000, 0x8080808080808000, 0x8080808080808000},
@@ -698,6 +580,212 @@ namespace chess
                   SquareRays{0x0000000000000000, 0x0402000000000000, 0x0402000000000000},
                   SquareRays{0x0000000000000000, 0x0200000000000000, 0x0200000000000000},
                   SquareRays{0x0000000000000000, 0x0000000000000000, 0x0000000000000000}}}};
+    public:
+        constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
+        constexpr explicit Board(const char *fenString) { set(fenString); }
+
+        [[nodiscard]] constexpr static bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
+
+        [[nodiscard]] std::string fen() const
+        {
+            auto ss = std::ostringstream();
+            int emptyCount = 0;
+            for (auto idx = 63; idx >= 0; idx--)
+            {
+                auto p = piece(square(idx));
+
+                bool empty = p == Piece::None;
+                emptyCount += empty;
+
+                bool endRank = idx % 8 == 0;
+                bool printEmpty = ((!empty || endRank) && emptyCount > 0);
+
+                if (printEmpty)
+                {
+                    ss << emptyCount;
+                    emptyCount = 0;
+                }
+
+                if (!empty)
+                {
+                    ss << s_pieceChars[p];
+                }
+
+                if (endRank && idx != 0)
+                {
+                    ss << '/';
+                }
+
+            }
+            ss << ' ';
+            ss << s_pieceChars[m_turn];
+
+            // TODO: Castling rights
+            // TODO: En passant square
+            // TODO: Half-move clock
+            // TODO: Full-move number
+            return ss.str();
+        }
+
+        void constexpr set(const char *fenString)
+        {
+            m_bitboards = std::array<bitboard_t, 15>{};
+            int sqr = 63;
+            size_t fenIdx = 0;
+            while (fenString[fenIdx] != ' ')
+            {
+                switch (fenString[fenIdx++])
+                {
+                    case 'r':
+                        m_bitboards[Piece::BRook] |= square(sqr--);
+                        break;
+                    case 'n':
+                        m_bitboards[Piece::BKnight] |= square(sqr--);
+                        break;
+                    case 'b':
+                        m_bitboards[Piece::BBishop] |= square(sqr--);
+                        break;
+                    case 'q':
+                        m_bitboards[Piece::BQueen] |= square(sqr--);
+                        break;
+                    case 'k':
+                        m_bitboards[Piece::BKing] |= square(sqr--);
+                        break;
+                    case 'p':
+                        m_bitboards[Piece::BPawn] |= square(sqr--);
+                        break;
+                    case 'R':
+                        m_bitboards[Piece::WRook] |= square(sqr--);
+                        break;
+                    case 'N':
+                        m_bitboards[Piece::WKnight] |= square(sqr--);
+                        break;
+                    case 'B':
+                        m_bitboards[Piece::WBishop] |= square(sqr--);
+                        break;
+                    case 'Q':
+                        m_bitboards[Piece::WQueen] |= square(sqr--);
+                        break;
+                    case 'K':
+                        m_bitboards[Piece::WKing] |= square(sqr--);
+                        break;
+                    case 'P':
+                        m_bitboards[Piece::WPawn] |= square(sqr--);
+                        break;
+                    case '/':
+                        break;
+                    case '1':
+                        sqr -= 1;
+                        break;
+                    case '2':
+                        sqr -= 2;
+                        break;
+                    case '3':
+                        sqr -= 3;
+                        break;
+                    case '4':
+                        sqr -= 4;
+                        break;
+                    case '5':
+                        sqr -= 5;
+                        break;
+                    case '6':
+                        sqr -= 6;
+                        break;
+                    case '7':
+                        sqr -= 7;
+                        break;
+                    case '8':
+                        sqr -= 8;
+                        break;
+                }
+            }
+
+            m_bitboards[Color::White] =
+                    m_bitboards[Piece::WPawn] | m_bitboards[Piece::WRook] | m_bitboards[Piece::WKnight] | m_bitboards[Piece::WBishop] |
+                    m_bitboards[Piece::WQueen] | m_bitboards[Piece::WKing];
+
+            m_bitboards[Color::Black] =
+                    m_bitboards[Piece::BPawn] | m_bitboards[Piece::BRook] | m_bitboards[Piece::BKnight] | m_bitboards[Piece::BBishop] |
+                    m_bitboards[Piece::BQueen] | m_bitboards[Piece::BKing];
+
+            m_bitboards[Piece::None] = ~m_bitboards[Color::White] & ~m_bitboards[Color::Black];
+
+            m_turn = fenString[++fenIdx] == 'w' ? Color::White : Color::Black;
+
+            // TODO: Castling rights
+            // TODO: En passant square
+            // TODO: Half-move clock
+            // TODO: Full-move number
+        }
+
+        [[nodiscard]] constexpr Color turn() const noexcept { return m_turn; }
+
+        [[nodiscard]] constexpr bitboard_t moves(File f, Rank r) const noexcept
+        {
+            switch (piece(f, r))
+            {
+                case Piece::WPawn:
+                    return moves<Piece::WPawn>(f, r);
+                case Piece::WKnight:
+                    return moves<Piece::WKnight>(f, r);
+                case Piece::WRook:
+                    return moves<Piece::WRook>(f, r);
+                case Piece::WBishop:
+                    return moves<Piece::WBishop>(f, r);
+                case Piece::WQueen:
+                    return moves<Piece::WQueen>(f, r);
+                case Piece::WKing:
+                    return moves<Piece::WKing>(f, r);
+                case Piece::BPawn:
+                    return moves<Piece::BPawn>(f, r);
+                case Piece::BKnight:
+                    return moves<Piece::BKnight>(f, r);
+                case Piece::BRook:
+                    return moves<Piece::BRook>(f, r);
+                case Piece::BBishop:
+                    return moves<Piece::BBishop>(f, r);
+                case Piece::BQueen:
+                    return moves<Piece::BQueen>(f, r);
+                case Piece::BKing:
+                    return moves<Piece::BKing>(f, r);
+                case None:
+                default:
+                    return s_emptyBoard;
+            }
+        }
+
+        [[nodiscard]] constexpr bitboard_t attacking(File f, Rank r) const noexcept
+        {
+            auto occupied = all();
+            // TODO
+            return 0;
+        }
+
+        template<Color C>
+        [[nodiscard]] constexpr bitboard_t attackedBy(File f, Rank r) const noexcept
+        {
+            if constexpr (C == Color::White)
+            {
+                // Checking if this square is attacked by white pieces. (i.e. I'm black)
+                auto occupied = all();
+                return (pawnAttacks<Color::White>(f, r) & m_bitboards[Piece::BPawn]) |
+                       (rookMoves(f, r, occupied) & m_bitboards[Piece::BRook]) |
+                       (knightMoves<Color::White>(f, r) & m_bitboards[Piece::BKnight]) |
+                       (bishopMoves(f, r, occupied) & m_bitboards[Piece::BBishop]) |
+                       (kingMoves<Color::White>(f, r) & m_bitboards[Piece::BKing]);
+            }
+            else
+            {
+                // Checking if this square is attacked by black pieces. (i.e. I'm white)
+                auto occupied = all();
+                return (pawnAttacks<Color::Black>(f, r) & m_bitboards[Piece::WPawn]) |
+                       (rookMoves(f, r, occupied) & m_bitboards[Piece::WRook]) |
+                       (knightMoves<Color::Black>(f, r) & m_bitboards[Piece::WKnight]) |
+                       (bishopMoves(f, r, occupied) & m_bitboards[Piece::WBishop]) |
+                       (kingMoves<Color::Black>(f, r) & m_bitboards[Piece::WKing]);
+            }
+        }
     };
 } // namespace chess
 
