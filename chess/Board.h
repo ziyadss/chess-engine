@@ -70,7 +70,7 @@ namespace chess
                 auto [f, r] = find<Piece::WKing>();
                 return attackedBy<Color::Black>(f, r) != s_emptyBoard;
             }
-            else
+            else if constexpr (C == Color::Black)
             {
                 auto [f, r] = find<Piece::BKing>();
                 return attackedBy<Color::White>(f, r) != s_emptyBoard;
@@ -85,19 +85,19 @@ namespace chess
                 // Checking if this square is attacked by white pieces.
                 auto occupied = all();
                 return (pawnAttacks<Color::Black>(f, r) & m_bitboards[Piece::WPawn]) |
-                       (rookMoves(f, r, occupied) & m_bitboards[Piece::WRook]) |
+                       (rookMoves<Color::Black>(f, r, occupied) & (m_bitboards[Piece::WRook] | m_bitboards[Piece::WQueen])) |
                        (knightMoves<Color::Black>(f, r) & m_bitboards[Piece::WKnight]) |
-                       (bishopMoves(f, r, occupied) & m_bitboards[Piece::WBishop]) |
+                       (bishopMoves<Color::Black>(f, r, occupied) & (m_bitboards[Piece::WBishop] | m_bitboards[Piece::WQueen])) |
                        (kingMoves<Color::Black>(f, r) & m_bitboards[Piece::WKing]);
             }
-            else
+            else if constexpr (C == Color::Black)
             {
                 // Checking if this square is attacked by black pieces.
                 auto occupied = all();
                 return (pawnAttacks<Color::White>(f, r) & m_bitboards[Piece::BPawn]) |
-                       (rookMoves(f, r, occupied) & m_bitboards[Piece::BRook]) |
+                       (rookMoves<Color::White>(f, r, occupied) & (m_bitboards[Piece::BRook] | m_bitboards[Piece::BQueen])) |
                        (knightMoves<Color::White>(f, r) & m_bitboards[Piece::BKnight]) |
-                       (bishopMoves(f, r, occupied) & m_bitboards[Piece::BBishop]) |
+                       (bishopMoves<Color::White>(f, r, occupied) & (m_bitboards[Piece::BBishop] | m_bitboards[Piece::BQueen])) |
                        (kingMoves<Color::White>(f, r) & m_bitboards[Piece::BKing]);
             }
         }
