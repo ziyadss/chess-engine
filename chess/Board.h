@@ -112,6 +112,7 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnMoves(File f, Rank r) const noexcept
         {
+            // TODO: validate double pawn moves
             if constexpr (C == Color::White) return pawnAttacks<Color::White>(f, r) | (s_wPawnMoves[f][r] & empty());
             if constexpr (C == Color::Black) return pawnAttacks<Color::Black>(f, r) | (s_bPawnMoves[f][r] & empty());
         }
