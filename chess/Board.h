@@ -33,8 +33,6 @@ namespace chess
             return Piece::None;
         }
 
-        [[nodiscard]] static constexpr bitboard_t square(int index) noexcept { return s_squares[7 - (index & 7)][index >> 3]; }
-
         template<Piece P>
         [[nodiscard]] constexpr bitboard_t moves(File f, Rank r) const noexcept
         {
@@ -129,16 +127,6 @@ namespace chess
             return s_kingMoves[f][r] & ~m_bitboards[C];
         }
 
-        struct SquareRays { bitboard_t lower, upper, line; };
-        [[nodiscard]] static constexpr bitboard_t lineAttacks(bitboard_t occupancy, const SquareRays &rays) noexcept
-        {
-            bitboard_t lower = rays.lower & occupancy;
-            bitboard_t upper = rays.upper & occupancy;
-            bitboard_t ms1B = (0x8000000000000000) >> __builtin_clzll(lower | 1);
-            bitboard_t diff = upper ^ (upper - ms1B);
-            return rays.line & diff;
-        }
-
         template<Color C>
         [[nodiscard]] constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) const noexcept
         {
@@ -155,6 +143,20 @@ namespace chess
         [[nodiscard]] constexpr bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy) const noexcept
         {
             return queenMoves(f, r, occupancy) & ~m_bitboards[C];
+        }
+
+        [[nodiscard]] static constexpr bitboard_t square(int index) noexcept { return s_squares[7 - (index & 7)][index >> 3]; }
+
+        [[nodiscard]] constexpr static bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
+
+        struct SquareRays { bitboard_t lower, upper, line; };
+        [[nodiscard]] static constexpr bitboard_t lineAttacks(bitboard_t occupancy, const SquareRays &rays) noexcept
+        {
+            bitboard_t lower = rays.lower & occupancy;
+            bitboard_t upper = rays.upper & occupancy;
+            bitboard_t ms1B = (0x8000000000000000) >> __builtin_clzll(lower | 1);
+            bitboard_t diff = upper ^ (upper - ms1B);
+            return rays.line & diff;
         }
 
         [[nodiscard]] static constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) noexcept
@@ -632,8 +634,6 @@ namespace chess
     public:
         constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
         constexpr explicit Board(const char *fenString) { set(fenString); }
-
-        [[nodiscard]] constexpr static bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
 
         [[nodiscard]] std::string fen() const
         {
