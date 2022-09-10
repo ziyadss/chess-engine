@@ -15,7 +15,7 @@ set(WARNINGS1 "-Wall;-Wpedantic;-Wextra;-Wshadow;-Wfloat-equal;-Wparentheses;-Wf
 set(WARNINGS2 "-Wlogical-op;-Wshift-overflow=2;-Wduplicated-cond;-Wcast-qual;-Wcast-align;-Wsuggest-final-types;-Weffc++;")
 set(WARNINGS3 "-Wsuggest-override;-Wstrict-null-sentinel;-Wold-style-cast;-Wzero-as-null-pointer-constant;-Wextra-semi;")
 
-#set(FLAGS "-Ofast;")
+set(FLAGS "-Ofast;")
 set(OPTIMIZATIONS "-fstrict-enums")
 
 target_compile_options(chess_engine PUBLIC ${WARNINGS1})
