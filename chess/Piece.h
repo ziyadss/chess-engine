@@ -15,7 +15,7 @@ namespace chess
 
         BPawn = WPawn + Black,
 
-        BKnight, BRook, BBishop, BQueen, BKing,
+        BKnight, BRook, BBishop, BQueen, BKing
     };
 } // namespace chess
 

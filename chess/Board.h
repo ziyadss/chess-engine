@@ -39,17 +39,17 @@ namespace chess
         [[nodiscard]] constexpr bitboard_t moves(File f, Rank r) const noexcept
         {
             if constexpr (P == Piece::WPawn) return pawnMoves<Color::White>(f, r);
-            if constexpr (P == Piece::WRook) return rookMoves<Color::White>(f, r, all());
+            if constexpr (P == Piece::WRook) return rookMoves<Color::White>(f, r);
             if constexpr (P == Piece::WKnight) return knightMoves<Color::White>(f, r);
-            if constexpr (P == Piece::WBishop) return bishopMoves<Color::White>(f, r, all());
-            if constexpr (P == Piece::WQueen) return queenMoves<Color::White>(f, r, all());
+            if constexpr (P == Piece::WBishop) return bishopMoves<Color::White>(f, r);
+            if constexpr (P == Piece::WQueen) return queenMoves<Color::White>(f, r);
             if constexpr (P == Piece::WKing) return kingMoves<Color::White>(f, r);
 
             if constexpr (P == Piece::BPawn) return pawnMoves<Color::Black>(f, r);
-            if constexpr (P == Piece::BRook) return rookMoves<Color::Black>(f, r, all());
+            if constexpr (P == Piece::BRook) return rookMoves<Color::Black>(f, r);
             if constexpr (P == Piece::BKnight) return knightMoves<Color::Black>(f, r);
-            if constexpr (P == Piece::BBishop) return bishopMoves<Color::Black>(f, r, all());
-            if constexpr (P == Piece::BQueen) return queenMoves<Color::Black>(f, r, all());
+            if constexpr (P == Piece::BBishop) return bishopMoves<Color::Black>(f, r);
+            if constexpr (P == Piece::BQueen) return queenMoves<Color::Black>(f, r);
             if constexpr (P == Piece::BKing) return kingMoves<Color::Black>(f, r);
         }
 
@@ -112,6 +112,7 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnMoves(File f, Rank r) const noexcept
         {
+            // TODO: validate double pawn moves
             if constexpr (C == Color::White) return pawnAttacks<Color::White>(f, r) | (s_wPawnMoves[f][r] & empty());
             if constexpr (C == Color::Black) return pawnAttacks<Color::Black>(f, r) | (s_bPawnMoves[f][r] & empty());
         }
@@ -139,21 +140,21 @@ namespace chess
         }
 
         template<Color C>
-        [[nodiscard]] constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) const noexcept
+        [[nodiscard]] constexpr bitboard_t rookMoves(File f, Rank r) const noexcept
         {
-            return rookMoves(f, r, occupancy) & ~m_bitboards[C];
+            return rookMoves(f, r, all()) & ~m_bitboards[C];
         }
 
         template<Color C>
-        [[nodiscard]] constexpr bitboard_t bishopMoves(File f, Rank r, bitboard_t occupancy) const noexcept
+        [[nodiscard]] constexpr bitboard_t bishopMoves(File f, Rank r) const noexcept
         {
-            return bishopMoves(f, r, occupancy) & ~m_bitboards[C];
+            return bishopMoves(f, r, all()) & ~m_bitboards[C];
         }
 
         template<Color C>
-        [[nodiscard]] constexpr bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy) const noexcept
+        [[nodiscard]] constexpr bitboard_t queenMoves(File f, Rank r) const noexcept
         {
-            return queenMoves(f, r, occupancy) & ~m_bitboards[C];
+            return queenMoves(f, r, all()) & ~m_bitboards[C];
         }
 
         [[nodiscard]] static constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) noexcept
