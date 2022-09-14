@@ -18,10 +18,7 @@ namespace chess
         std::array<bitboard_t, 15> m_bitboards{};
         Color m_turn = Color::White;
 
-        [[nodiscard]] constexpr bitboard_t white() const noexcept { return m_bitboards[Color::White]; }
-        [[nodiscard]] constexpr bitboard_t black() const noexcept { return m_bitboards[Color::Black]; }
-
-        [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~empty(); }
+        [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr bitboard_t empty() const noexcept { return m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr Piece piece(File f, Rank r) const noexcept { return piece(square(f, r)); }
         [[nodiscard]] constexpr Piece piece(bitboard_t square) const noexcept
@@ -63,48 +60,38 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bool inCheck() const noexcept
         {
-            if constexpr (C == Color::White)
-            {
-                auto [f, r] = find<Piece::WKing>();
-                return attackedBy<Color::Black>(f, r) != s_emptyBoard;
-            }
-            else if constexpr (C == Color::Black)
-            {
-                auto [f, r] = find<Piece::BKing>();
-                return attackedBy<Color::White>(f, r) != s_emptyBoard;
-            }
+            const Piece king = TemplatePiece::King<C>;
+            const auto [f, r] = find<king>();
+
+            const Color opponent = ~C;
+            return attackedBy<opponent>(f, r) != s_emptyBoard;
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t attackedBy(File f, Rank r) const noexcept
         {
-            if constexpr (C == Color::White)
-            {
-                // Checking if this square is attacked by white pieces.
-                auto occupied = all();
-                return (pawnAttacks<Color::Black>(f, r) & m_bitboards[Piece::WPawn]) |
-                       (rookMoves<Color::Black>(f, r, occupied) & (m_bitboards[Piece::WRook] | m_bitboards[Piece::WQueen])) |
-                       (knightMoves<Color::Black>(f, r) & m_bitboards[Piece::WKnight]) |
-                       (bishopMoves<Color::Black>(f, r, occupied) & (m_bitboards[Piece::WBishop] | m_bitboards[Piece::WQueen])) |
-                       (kingMoves<Color::Black>(f, r) & m_bitboards[Piece::WKing]);
-            }
-            else if constexpr (C == Color::Black)
-            {
-                // Checking if this square is attacked by black pieces.
-                auto occupied = all();
-                return (pawnAttacks<Color::White>(f, r) & m_bitboards[Piece::BPawn]) |
-                       (rookMoves<Color::White>(f, r, occupied) & (m_bitboards[Piece::BRook] | m_bitboards[Piece::BQueen])) |
-                       (knightMoves<Color::White>(f, r) & m_bitboards[Piece::BKnight]) |
-                       (bishopMoves<Color::White>(f, r, occupied) & (m_bitboards[Piece::BBishop] | m_bitboards[Piece::BQueen])) |
-                       (kingMoves<Color::White>(f, r) & m_bitboards[Piece::BKing]);
-            }
+            const Piece pawn = TemplatePiece::Pawn<C>;
+            const Piece knight = TemplatePiece::Knight<C>;
+            const Piece rook = TemplatePiece::Rook<C>;
+            const Piece bishop = TemplatePiece::Bishop<C>;
+            const Piece queen = TemplatePiece::Queen<C>;
+            const Piece king = TemplatePiece::King<C>;
+
+            const Color opponent = ~C;
+
+            auto occupied = all();
+            return (pawnAttacks<opponent>(f, r) & m_bitboards[pawn]) |
+                   (rookMoves<opponent>(f, r, occupied) & (m_bitboards[rook] | m_bitboards[queen])) |
+                   (knightMoves<opponent>(f, r) & m_bitboards[knight]) |
+                   (bishopMoves<opponent>(f, r, occupied) & (m_bitboards[bishop] | m_bitboards[queen])) |
+                   (kingMoves<opponent>(f, r) & m_bitboards[king]);
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnAttacks(File f, Rank r) const noexcept
         {
-            if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & black());
-            if constexpr (C == Color::Black) return (s_bPawnAttacks[f][r] & white());
+            if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & m_bitboards[Color::Black]);
+            if constexpr (C == Color::Black) return (s_bPawnAttacks[f][r] & m_bitboards[Color::White]);
         }
 
         template<Color C>
