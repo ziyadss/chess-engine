@@ -76,7 +76,6 @@ namespace chess
 
         [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr bitboard_t empty() const noexcept { return m_bitboards[Piece::None]; }
-        [[nodiscard]] constexpr Piece piece(File f, Rank r) const noexcept { return piece(square(f, r)); }
         [[nodiscard]] constexpr Piece piece(bitboard_t square) const noexcept
         {
             for (const Piece &p: s_piecesList)
@@ -822,8 +821,6 @@ namespace chess
             // TODO: Half-move clock
             // TODO: Full-move number
         }
-
-        [[nodiscard]] constexpr Color turn() const noexcept { return m_turn; }
 
         [[nodiscard]] constexpr bitboard_t moves(Piece p, File f, Rank r) const noexcept
         {
