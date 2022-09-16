@@ -18,60 +18,7 @@ namespace chess
         std::array<bitboard_t, 15> m_bitboards{};
         Color m_turn = Color::White;
 
-        template<Color C>
-        constexpr bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string_view &uciMove)
-        {
-            auto fromSquare = square(fromFile, fromRank);
-            auto fromPiece = piece(fromSquare);
-
-            bool promotion = fromPiece == TemplatePiece::Pawn<C> && toRank == Rank::Eight;
-            if (!promotion)
-            {
-                return move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank);
-            }
-            else
-            {
-                // If piece is unspecified, assume queen
-                auto p = (uciMove.size() == 4) ? TemplatePiece::Queen<C> : charPiece<C>(uciMove[4]);
-                return promote<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank, p);
-            }
-        }
-
-        template<Color C>
-        constexpr bool move(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank) noexcept
-        {
-            auto toSquare = square(toFile, toRank);
-
-            auto legalMoves = moves(fromPiece, fromFile, fromRank);
-            if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
-
-            auto toPiece = piece(toSquare);
-
-            m_bitboards[fromPiece] ^= (fromSquare | toSquare);
-            m_bitboards[C] ^= (fromSquare | toSquare);
-            m_bitboards[Piece::None] ^= fromSquare;
-
-            m_bitboards[toPiece] ^= toSquare;
-            if (toPiece != Piece::None) { m_bitboards[~C] ^= toSquare; }
-
-            return true;
-        }
-
-        template<Color C>
-        bool promote(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank, Piece piece) noexcept
-        {
-            auto valid = piece != Piece::WPawn && piece != Piece::BPawn && piece != Piece::None;
-            if (valid && move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank))
-            {
-                m_bitboards[TemplatePiece::Pawn<C>] ^= square(fromFile, fromRank);
-                m_bitboards[piece] ^= square(toFile, toRank);
-                return true;
-            }
-            return false;
-        }
-
         [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~m_bitboards[Piece::None]; }
-        [[nodiscard]] constexpr bitboard_t empty() const noexcept { return m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr Piece piece(bitboard_t square) const noexcept
         {
             for (const Piece &p: s_piecesList)
@@ -82,40 +29,12 @@ namespace chess
         }
 
         template<Piece P>
-        [[nodiscard]] constexpr bitboard_t moves(File f, Rank r) const noexcept
-        {
-            if constexpr (P == Piece::WPawn) return pawnMoves<Color::White>(f, r);
-            else if constexpr (P == Piece::WRook) return rookMoves<Color::White>(f, r, all());
-            else if constexpr (P == Piece::WKnight) return knightMoves<Color::White>(f, r);
-            else if constexpr (P == Piece::WBishop) return bishopMoves<Color::White>(f, r, all());
-            else if constexpr (P == Piece::WQueen) return queenMoves<Color::White>(f, r, all());
-            else if constexpr (P == Piece::WKing) return kingMoves<Color::White>(f, r);
-
-            else if constexpr (P == Piece::BPawn) return pawnMoves<Color::Black>(f, r);
-            else if constexpr (P == Piece::BRook) return rookMoves<Color::Black>(f, r, all());
-            else if constexpr (P == Piece::BKnight) return knightMoves<Color::Black>(f, r);
-            else if constexpr (P == Piece::BBishop) return bishopMoves<Color::Black>(f, r, all());
-            else if constexpr (P == Piece::BQueen) return queenMoves<Color::Black>(f, r, all());
-            else if constexpr (P == Piece::BKing) return kingMoves<Color::Black>(f, r);
-        }
-
-        template<Piece P>
         [[nodiscard]] constexpr std::pair<File, Rank> find() const noexcept
         {
             auto bitLocation = __builtin_ffsll(m_bitboards[P]) - 1;
             auto f = 7 - (bitLocation & 7);
             auto r = bitLocation >> 3;
             return {File(f), Rank(r)};
-        }
-
-        template<Color C>
-        [[nodiscard]] constexpr bool inCheck() const noexcept
-        {
-            const Piece king = TemplatePiece::King<C>;
-            const auto [f, r] = find<king>();
-
-            const Color opponent = ~C;
-            return attackedBy<opponent>(f, r) != s_emptyBoard;
         }
 
         template<Color C>
@@ -139,6 +58,16 @@ namespace chess
         }
 
         template<Color C>
+        [[nodiscard]] constexpr bool inCheck() const noexcept
+        {
+            const Piece king = TemplatePiece::King<C>;
+            const auto [f, r] = find<king>();
+
+            const Color opponent = ~C;
+            return attackedBy<opponent>(f, r) != s_emptyBoard;
+        }
+
+        template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnAttacks(File f, Rank r) const noexcept
         {
             if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & m_bitboards[Color::Black]);
@@ -148,19 +77,19 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnMoves(File f, Rank r) const noexcept
         {
-            auto free = empty();
+            auto empty = m_bitboards[Piece::None];
             auto attacks = pawnAttacks<C>(f, r);
 
             if constexpr (C == Color::White)
             {
-                auto moves = s_wPawnMoves[f][r] & free;
-                auto doubleMoves = r == Rank::Two ? (moves << 8) & free : s_emptyBoard;
+                auto moves = s_wPawnMoves[f][r] & empty;
+                auto doubleMoves = r == Rank::Two ? (moves << 8) & empty : s_emptyBoard;
                 return attacks | moves | doubleMoves;
             }
             else if constexpr (C == Color::Black)
             {
-                auto moves = s_bPawnMoves[f][r] & free;
-                auto doubleMoves = r == Rank::Seven ? (moves >> 8) & free : s_emptyBoard;
+                auto moves = s_bPawnMoves[f][r] & empty;
+                auto doubleMoves = r == Rank::Seven ? (moves >> 8) & empty : s_emptyBoard;
                 return attacks | moves | doubleMoves;
             }
         }
@@ -193,6 +122,111 @@ namespace chess
         [[nodiscard]] constexpr bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy) const noexcept
         {
             return queenMoves(f, r, occupancy) & ~m_bitboards[C];
+        }
+
+        template<Piece P>
+        [[nodiscard]] constexpr bitboard_t moves(File f, Rank r) const noexcept
+        {
+            if constexpr (P == Piece::WPawn) return pawnMoves<Color::White>(f, r);
+            else if constexpr (P == Piece::WRook) return rookMoves<Color::White>(f, r, all());
+            else if constexpr (P == Piece::WKnight) return knightMoves<Color::White>(f, r);
+            else if constexpr (P == Piece::WBishop) return bishopMoves<Color::White>(f, r, all());
+            else if constexpr (P == Piece::WQueen) return queenMoves<Color::White>(f, r, all());
+            else if constexpr (P == Piece::WKing) return kingMoves<Color::White>(f, r);
+
+            else if constexpr (P == Piece::BPawn) return pawnMoves<Color::Black>(f, r);
+            else if constexpr (P == Piece::BRook) return rookMoves<Color::Black>(f, r, all());
+            else if constexpr (P == Piece::BKnight) return knightMoves<Color::Black>(f, r);
+            else if constexpr (P == Piece::BBishop) return bishopMoves<Color::Black>(f, r, all());
+            else if constexpr (P == Piece::BQueen) return queenMoves<Color::Black>(f, r, all());
+            else if constexpr (P == Piece::BKing) return kingMoves<Color::Black>(f, r);
+        }
+
+        [[nodiscard]] constexpr bitboard_t moves(Piece p, File f, Rank r) const noexcept
+        {
+            switch (p)
+            {
+                case Piece::WPawn:
+                    return moves<Piece::WPawn>(f, r);
+                case Piece::WKnight:
+                    return moves<Piece::WKnight>(f, r);
+                case Piece::WRook:
+                    return moves<Piece::WRook>(f, r);
+                case Piece::WBishop:
+                    return moves<Piece::WBishop>(f, r);
+                case Piece::WQueen:
+                    return moves<Piece::WQueen>(f, r);
+                case Piece::WKing:
+                    return moves<Piece::WKing>(f, r);
+                case Piece::BPawn:
+                    return moves<Piece::BPawn>(f, r);
+                case Piece::BKnight:
+                    return moves<Piece::BKnight>(f, r);
+                case Piece::BRook:
+                    return moves<Piece::BRook>(f, r);
+                case Piece::BBishop:
+                    return moves<Piece::BBishop>(f, r);
+                case Piece::BQueen:
+                    return moves<Piece::BQueen>(f, r);
+                case Piece::BKing:
+                    return moves<Piece::BKing>(f, r);
+                case None:
+                default:
+                    return s_emptyBoard;
+            }
+        }
+
+        template<Color C>
+        constexpr bool move(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank) noexcept
+        {
+            auto toSquare = square(toFile, toRank);
+
+            auto legalMoves = moves(fromPiece, fromFile, fromRank);
+            if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
+
+            auto toPiece = piece(toSquare);
+
+            m_bitboards[fromPiece] ^= (fromSquare | toSquare);
+            m_bitboards[C] ^= (fromSquare | toSquare);
+            m_bitboards[Piece::None] ^= fromSquare;
+
+            m_bitboards[toPiece] ^= toSquare;
+            if (toPiece != Piece::None) { m_bitboards[~C] ^= toSquare; }
+
+            return true;
+        }
+
+        template<Color C>
+        constexpr bool
+        promote(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank, Piece piece) noexcept
+        {
+            auto valid = piece != Piece::WPawn && piece != Piece::BPawn && piece != Piece::None;
+            if (valid && move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank))
+            {
+                m_bitboards[TemplatePiece::Pawn<C>] ^= square(fromFile, fromRank);
+                m_bitboards[piece] ^= square(toFile, toRank);
+                return true;
+            }
+            return false;
+        }
+
+        template<Color C>
+        constexpr bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string_view &uciMove)
+        {
+            auto fromSquare = square(fromFile, fromRank);
+            auto fromPiece = piece(fromSquare);
+
+            bool promotion = fromPiece == TemplatePiece::Pawn<C> && toRank == Rank::Eight;
+            if (!promotion)
+            {
+                return move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank);
+            }
+            else
+            {
+                // If piece is unspecified, assume queen
+                auto p = (uciMove.size() == 4) ? TemplatePiece::Queen<C> : charPiece<C>(uciMove[4]);
+                return promote<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank, p);
+            }
         }
 
         [[nodiscard]] static constexpr bitboard_t square(int index) noexcept { return s_squares[7 - (index & 7)][index >> 3]; }
@@ -816,40 +850,6 @@ namespace chess
             // TODO: En passant square
             // TODO: Half-move clock
             // TODO: Full-move number
-        }
-
-        [[nodiscard]] constexpr bitboard_t moves(Piece p, File f, Rank r) const noexcept
-        {
-            switch (p)
-            {
-                case Piece::WPawn:
-                    return moves<Piece::WPawn>(f, r);
-                case Piece::WKnight:
-                    return moves<Piece::WKnight>(f, r);
-                case Piece::WRook:
-                    return moves<Piece::WRook>(f, r);
-                case Piece::WBishop:
-                    return moves<Piece::WBishop>(f, r);
-                case Piece::WQueen:
-                    return moves<Piece::WQueen>(f, r);
-                case Piece::WKing:
-                    return moves<Piece::WKing>(f, r);
-                case Piece::BPawn:
-                    return moves<Piece::BPawn>(f, r);
-                case Piece::BKnight:
-                    return moves<Piece::BKnight>(f, r);
-                case Piece::BRook:
-                    return moves<Piece::BRook>(f, r);
-                case Piece::BBishop:
-                    return moves<Piece::BBishop>(f, r);
-                case Piece::BQueen:
-                    return moves<Piece::BQueen>(f, r);
-                case Piece::BKing:
-                    return moves<Piece::BKing>(f, r);
-                case None:
-                default:
-                    return s_emptyBoard;
-            }
         }
 
         constexpr bool move(const std::string_view &uciMove) noexcept
