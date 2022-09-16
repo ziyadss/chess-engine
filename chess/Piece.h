@@ -5,7 +5,7 @@ namespace chess
 {
     enum Color { White = 0, Black = 8 };
 
-    consteval Color operator~(Color c) { return Color(c ^ Color::Black); }
+    consteval Color operator~(Color c) noexcept { return Color(c ^ Color::Black); }
 
     enum Piece
     {

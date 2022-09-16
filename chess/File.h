@@ -8,7 +8,7 @@ namespace chess
         A, B, C, D, E, F, G, H
     };
 
-    constexpr File charFile(char c) { return File(c - 'A'); }
+    constexpr File charFile(char c) noexcept { return File(c - 'A'); }
 } // namespace chess
 
 #endif // CHESS_ENGINE_FILE_H
