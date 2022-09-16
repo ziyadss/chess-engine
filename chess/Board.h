@@ -18,6 +18,62 @@ namespace chess
         std::array<bitboard_t, 15> m_bitboards{};
         Color m_turn = Color::White;
 
+        template<Color C>
+        bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string &uciMove)
+        {
+            auto fromSquare = square(fromFile, fromRank);
+            auto fromPiece = piece(fromSquare);
+
+            bool promotion = fromPiece == TemplatePiece::Pawn<C> && toRank == Rank::Eight;
+            bool moved;
+            if (!promotion)
+            {
+                moved = move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank);
+            }
+            else
+            {
+                // If piece is unspecified, assume queen
+                auto p = (uciMove.size() == 4) ? TemplatePiece::Queen<C> : charPiece<C>(uciMove[4]);
+                moved = promote<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank, p);
+            }
+
+            if (moved) m_turn = ~m_turn;
+            return moved;
+        }
+
+        template<Color C>
+        bool constexpr move(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank) noexcept
+        {
+            auto toSquare = square(toFile, toRank);
+
+            auto legalMoves = moves(fromPiece, fromFile, fromRank);
+            if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
+
+            auto toPiece = piece(toSquare);
+
+            m_bitboards[fromPiece] ^= (fromSquare | toSquare);
+            m_bitboards[C] ^= (fromSquare | toSquare);
+            m_bitboards[Piece::None] ^= fromSquare;
+
+            m_bitboards[toPiece] ^= toSquare;
+            if (toPiece != Piece::None) { m_bitboards[~C] ^= toSquare; }
+
+            return true;
+        }
+
+        template<Color C>
+        bool promote(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank, Piece piece) noexcept
+        {
+            auto valid = piece != Piece::WPawn && piece != Piece::BPawn && piece != Piece::None;
+            if (valid && move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank))
+            {
+                m_bitboards[TemplatePiece::Pawn<C>] ^= square(fromFile, fromRank);
+                m_bitboards[piece] ^= square(toFile, toRank);
+                return true;
+            }
+            return false;
+        }
+
         [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr bitboard_t empty() const noexcept { return m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr Piece piece(File f, Rank r) const noexcept { return piece(square(f, r)); }
@@ -769,9 +825,9 @@ namespace chess
 
         [[nodiscard]] constexpr Color turn() const noexcept { return m_turn; }
 
-        [[nodiscard]] constexpr bitboard_t moves(File f, Rank r) const noexcept
+        [[nodiscard]] constexpr bitboard_t moves(Piece p, File f, Rank r) const noexcept
         {
-            switch (piece(f, r))
+            switch (p)
             {
                 case Piece::WPawn:
                     return moves<Piece::WPawn>(f, r);
@@ -801,6 +857,18 @@ namespace chess
                 default:
                     return s_emptyBoard;
             }
+        }
+
+        bool move(const std::string &uciMove) noexcept
+        {
+            auto fromFile = charFile(uciMove[0]);
+            auto fromRank = charRank(uciMove[1]);
+            auto toFile = charFile(uciMove[2]);
+            auto toRank = charRank(uciMove[3]);
+
+            return (m_turn == Color::White) ? moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove)
+                                            : moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
+
         }
     };
 } // namespace chess
