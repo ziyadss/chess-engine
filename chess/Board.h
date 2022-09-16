@@ -200,7 +200,8 @@ namespace chess
         constexpr bool
         promote(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank, Piece piece) noexcept
         {
-            auto valid = piece != Piece::WPawn && piece != Piece::BPawn && piece != Piece::None;
+            auto valid = piece == ColoredPiece::Knight<C> || piece == ColoredPiece::Rook<C> || piece == ColoredPiece::Bishop<C> ||
+                         piece == ColoredPiece::Queen<C>;
             if (valid && move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank))
             {
                 m_bitboards[ColoredPiece::Pawn<C>] ^= square(fromFile, fromRank);

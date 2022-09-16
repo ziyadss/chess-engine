@@ -9,8 +9,7 @@ int main()
 
     std::cout << fen << std::endl << board.fen() << std::endl;
 
-    // {"b2b4", "a7a5", "b4a5", "a8a6", "a2a3", "a6h6", "a5a6", "h6g6", "a6a7", "g6h6", "a7a8k"};
-    auto moves = {"b2b4", "a7a5", "b4a5", "a8a6", "a2a3", "a6h6", "a5a6", "h6g6"};
+    auto moves = {"b2b4", "a7a5", "b4a5", "a8a6", "a2a3", "a6h6", "a5a6", "h6g6", "a6a7", "g6h6", "a7a8"};
     for (auto move: moves) // Move is a 4 letter string, or 5 for promotions.
     {
         bool legal = board.move(move);
