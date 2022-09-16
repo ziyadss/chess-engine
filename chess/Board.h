@@ -40,12 +40,12 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bitboard_t attackedBy(File f, Rank r) const noexcept
         {
-            const Piece pawn = TemplatePiece::Pawn<C>;
-            const Piece knight = TemplatePiece::Knight<C>;
-            const Piece rook = TemplatePiece::Rook<C>;
-            const Piece bishop = TemplatePiece::Bishop<C>;
-            const Piece queen = TemplatePiece::Queen<C>;
-            const Piece king = TemplatePiece::King<C>;
+            const Piece pawn = ColoredPiece::Pawn<C>;
+            const Piece knight = ColoredPiece::Knight<C>;
+            const Piece rook = ColoredPiece::Rook<C>;
+            const Piece bishop = ColoredPiece::Bishop<C>;
+            const Piece queen = ColoredPiece::Queen<C>;
+            const Piece king = ColoredPiece::King<C>;
 
             const Color opponent = ~C;
 
@@ -60,7 +60,7 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bool inCheck() const noexcept
         {
-            const Piece king = TemplatePiece::King<C>;
+            const Piece king = ColoredPiece::King<C>;
             const auto [f, r] = find<king>();
 
             const Color opponent = ~C;
@@ -203,7 +203,7 @@ namespace chess
             auto valid = piece != Piece::WPawn && piece != Piece::BPawn && piece != Piece::None;
             if (valid && move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank))
             {
-                m_bitboards[TemplatePiece::Pawn<C>] ^= square(fromFile, fromRank);
+                m_bitboards[ColoredPiece::Pawn<C>] ^= square(fromFile, fromRank);
                 m_bitboards[piece] ^= square(toFile, toRank);
                 return true;
             }
@@ -216,7 +216,7 @@ namespace chess
             auto fromSquare = square(fromFile, fromRank);
             auto fromPiece = piece(fromSquare);
 
-            bool promotion = fromPiece == TemplatePiece::Pawn<C> && toRank == Rank::Eight;
+            bool promotion = fromPiece == ColoredPiece::Pawn<C> && toRank == Rank::Eight;
             if (!promotion)
             {
                 return move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank);
@@ -224,7 +224,7 @@ namespace chess
             else
             {
                 // If piece is unspecified, assume queen
-                auto p = (uciMove.size() == 4) ? TemplatePiece::Queen<C> : charPiece<C>(uciMove[4]);
+                auto p = (uciMove.size() == 4) ? ColoredPiece::Queen<C> : charPiece<C>(uciMove[4]);
                 return promote<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank, p);
             }
         }

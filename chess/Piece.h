@@ -20,7 +20,7 @@ namespace chess
         BKnight, BRook, BBishop, BQueen, BKing
     };
 
-    namespace TemplatePiece
+    namespace ColoredPiece
     {
         template<Color C> constexpr Piece Pawn = C == Color::White ? Piece::WPawn : Piece::BPawn;
         template<Color C> constexpr Piece Knight = C == Color::White ? Piece::WKnight : Piece::BKnight;
@@ -36,17 +36,17 @@ namespace chess
         switch (c)
         {
             case 'p':
-                return TemplatePiece::Pawn<C>;
+                return ColoredPiece::Pawn<C>;
             case 'n':
-                return TemplatePiece::Knight<C>;
+                return ColoredPiece::Knight<C>;
             case 'r':
-                return TemplatePiece::Rook<C>;
+                return ColoredPiece::Rook<C>;
             case 'b':
-                return TemplatePiece::Bishop<C>;
+                return ColoredPiece::Bishop<C>;
             case 'q':
-                return TemplatePiece::Queen<C>;
+                return ColoredPiece::Queen<C>;
             case 'k':
-                return TemplatePiece::King<C>;
+                return ColoredPiece::King<C>;
             default:
                 return Piece::None;
         }
