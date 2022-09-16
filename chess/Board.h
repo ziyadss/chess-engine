@@ -19,30 +19,26 @@ namespace chess
         Color m_turn = Color::White;
 
         template<Color C>
-        bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string &uciMove)
+        constexpr bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string &uciMove)
         {
             auto fromSquare = square(fromFile, fromRank);
             auto fromPiece = piece(fromSquare);
 
             bool promotion = fromPiece == TemplatePiece::Pawn<C> && toRank == Rank::Eight;
-            bool moved;
             if (!promotion)
             {
-                moved = move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank);
+                return move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank);
             }
             else
             {
                 // If piece is unspecified, assume queen
                 auto p = (uciMove.size() == 4) ? TemplatePiece::Queen<C> : charPiece<C>(uciMove[4]);
-                moved = promote<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank, p);
+                return promote<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank, p);
             }
-
-            if (moved) m_turn = ~m_turn;
-            return moved;
         }
 
         template<Color C>
-        bool constexpr move(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank) noexcept
+        constexpr bool move(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank) noexcept
         {
             auto toSquare = square(toFile, toRank);
 
@@ -201,7 +197,7 @@ namespace chess
 
         [[nodiscard]] static constexpr bitboard_t square(int index) noexcept { return s_squares[7 - (index & 7)][index >> 3]; }
 
-        [[nodiscard]] constexpr static bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
+        [[nodiscard]] static constexpr bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
 
         struct SquareRays { bitboard_t lower, upper, line; };
         [[nodiscard]] static constexpr bitboard_t lineAttacks(bitboard_t occupancy, const SquareRays &rays) noexcept
@@ -228,15 +224,15 @@ namespace chess
             return rookMoves(f, r, occupancy) | bishopMoves(f, r, occupancy);
         }
 
-        constexpr static const bitboard_t s_emptyBoard = 0;
-        constexpr static const std::array<Piece, 12> s_piecesList{Piece::WPawn, Piece::WRook, Piece::WKnight, Piece::WBishop, Piece::WQueen,
+        static constexpr const bitboard_t s_emptyBoard = 0;
+        static constexpr const std::array<Piece, 12> s_piecesList{Piece::WPawn, Piece::WRook, Piece::WKnight, Piece::WBishop, Piece::WQueen,
                                                                   Piece::WKing, Piece::BPawn, Piece::BRook, Piece::BKnight, Piece::BBishop,
                                                                   Piece::BQueen, Piece::BKing};
 
-        constexpr const static std::array<char, 15> s_pieceChars = {'w', 'P', 'N', 'R', 'B', 'Q', 'K', '.', 'b', 'p', 'n', 'r', 'b', 'q',
+        static constexpr const std::array<char, 15> s_pieceChars = {'w', 'P', 'N', 'R', 'B', 'Q', 'K', '.', 'b', 'p', 'n', 'r', 'b', 'q',
                                                                     'k'};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_squares{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_squares{
                 {{0x0000000000000080, 0x0000000000008000, 0x0000000000800000, 0x0000000080000000, 0x0000008000000000, 0x0000800000000000,
                   0x0080000000000000, 0x8000000000000000},
                  {0x0000000000000040, 0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000, 0x0000400000000000,
@@ -254,13 +250,13 @@ namespace chess
                  {0x0000000000000001, 0x0000000000000100, 0x0000000000010000, 0x0000000001000000, 0x0000000100000000, 0x0000010000000000,
                   0x0001000000000000, 0x0100000000000000}}};
 
-        constexpr static const std::array<bitboard_t, 15> s_startingPosition{0xFFFF000000000000, 0x000000000000FF00, 0x0000000000000042,
+        static constexpr const std::array<bitboard_t, 15> s_startingPosition{0xFFFF000000000000, 0x000000000000FF00, 0x0000000000000042,
                                                                              0x0000000000000081, 0x0000000000000024, 0x0000000000000010,
                                                                              0x0000000000000008, 0x0000FFFFFFFF0000, 0x000000000000FFFF,
                                                                              0x00FF000000000000, 0x4200000000000000, 0x8100000000000000,
                                                                              0x2400000000000000, 0x1000000000000000, 0x8000000000000000};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_wPawnMoves{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_wPawnMoves{
                 {{0x0000000000008000, 0x0000000000800000, 0x0000000080000000, 0x0000008000000000, 0x0000800000000000, 0x0080000000000000,
                   0x8000000000000000, 0x0000000000000000},
                  {0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000, 0x0000400000000000, 0x0040000000000000,
@@ -278,7 +274,7 @@ namespace chess
                  {0x0000000000000100, 0x0000000000010000, 0x0000000001000000, 0x0000000100000000, 0x0000010000000000, 0x0001000000000000,
                   0x0100000000000000, 0x0000000000000000}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_bPawnMoves{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_bPawnMoves{
                 {{0x0000000000000000, 0x0000000000000080, 0x0000000000008000, 0x0000000000800000, 0x0000000080000000, 0x0000008000000000,
                   0x0000800000000000, 0x0080000000000000},
                  {0x0000000000000000, 0x0000000000000040, 0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000,
@@ -296,7 +292,7 @@ namespace chess
                  {0x0000000000000000, 0x0000000000000001, 0x0000000000000100, 0x0000000000010000, 0x0000000001000000, 0x0000000100000000,
                   0x0000010000000000, 0x0001000000000000}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_wPawnAttacks{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_wPawnAttacks{
                 {{0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000, 0x0000400000000000, 0x0040000000000000,
                   0x4000000000000000, 0x0000000000000000},
                  {0x000000000000A000, 0x0000000000A00000, 0x00000000A0000000, 0x000000A000000000, 0x0000A00000000000, 0x00A0000000000000,
@@ -314,7 +310,7 @@ namespace chess
                  {0x0000000000000200, 0x0000000000020000, 0x0000000002000000, 0x0000000200000000, 0x0000020000000000, 0x0002000000000000,
                   0x0200000000000000, 0x0000000000000000}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_bPawnAttacks{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_bPawnAttacks{
                 {{0x0000000000000000, 0x0000000000000040, 0x0000000000004000, 0x0000000000400000, 0x0000000040000000, 0x0000004000000000,
                   0x0000400000000000, 0x0040000000000000},
                  {0x0000000000000000, 0x00000000000000A0, 0x000000000000A000, 0x0000000000A00000, 0x00000000A0000000, 0x000000A000000000,
@@ -332,7 +328,7 @@ namespace chess
                  {0x0000000000000000, 0x0000000000000002, 0x0000000000000200, 0x0000000000020000, 0x0000000002000000, 0x0000000200000000,
                   0x0000020000000000, 0x0002000000000000}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_knightMoves{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_knightMoves{
                 {{0x0000000000402000, 0x0000000040200020, 0x0000004020002040, 0x0000402000204000, 0x0040200020400000, 0x4020002040000000,
                   0x2000204000000000, 0x0020400000000000},
                  {0x0000000000A01000, 0x00000000A0100010, 0x000000A0100010A0, 0x0000A0100010A000, 0x00A0100010A00000, 0xA0100010A0000000,
@@ -350,7 +346,7 @@ namespace chess
                  {0x0000000000020400, 0x0000000002040004, 0x0000000204000402, 0x0000020400040200, 0x0002040004020000, 0x0204000402000000,
                   0x0400040200000000, 0x0004020000000000}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_rookMoves{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_rookMoves{
                 {{0x808080808080807F, 0x8080808080807F80, 0x80808080807F8080, 0x808080807F808080, 0x8080807F80808080, 0x80807F8080808080,
                   0x807F808080808080, 0x7F80808080808080},
                  {0x40404040404040BF, 0x404040404040BF40, 0x4040404040BF4040, 0x40404040BF404040, 0x404040BF40404040, 0x4040BF4040404040,
@@ -368,7 +364,7 @@ namespace chess
                  {0x01010101010101FE, 0x010101010101FE01, 0x0101010101FE0101, 0x01010101FE010101, 0x010101FE01010101, 0x0101FE0101010101,
                   0x01FE010101010101, 0xFE01010101010101}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_bishopMoves{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_bishopMoves{
                 {{0x0102040810204000, 0x0204081020400040, 0x0408102040004020, 0x0810204000402010, 0x1020400040201008, 0x2040004020100804,
                   0x4000402010080402, 0x0040201008040201},
                  {0x000102040810A000, 0x0102040810A000A0, 0x02040810A000A010, 0x040810A000A01008, 0x0810A000A0100804, 0x10A000A010080402,
@@ -386,7 +382,7 @@ namespace chess
                  {0x8040201008040200, 0x4020100804020002, 0x2010080402000204, 0x1008040200020408, 0x0804020002040810, 0x0402000204081020,
                   0x0200020408102040, 0x0002040810204080}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_queenMoves{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_queenMoves{
                 {{0x8182848890A0C07F, 0x82848890A0C07FC0, 0x848890A0C07FC0A0, 0x8890A0C07FC0A090, 0x90A0C07FC0A09088, 0xA0C07FC0A0908884,
                   0xC07FC0A090888482, 0x7FC0A09088848281},
                  {0x404142444850E0BF, 0x4142444850E0BFE0, 0x42444850E0BFE050, 0x444850E0BFE05048, 0x4850E0BFE0504844, 0x50E0BFE050484442,
@@ -404,7 +400,7 @@ namespace chess
                  {0x81412111090503FE, 0x412111090503FE03, 0x2111090503FE0305, 0x11090503FE030509, 0x090503FE03050911, 0x0503FE0305091121,
                   0x03FE030509112141, 0xFE03050911214181}}};
 
-        constexpr static const std::array<const std::array<bitboard_t, 8>, 8> s_kingMoves{
+        static constexpr const std::array<const std::array<bitboard_t, 8>, 8> s_kingMoves{
                 {{0x000000000000C040, 0x0000000000C040C0, 0x00000000C040C000, 0x000000C040C00000, 0x0000C040C0000000, 0x00C040C000000000,
                   0xC040C00000000000, 0x40C0000000000000},
                  {0x000000000000E0A0, 0x0000000000E0A0E0, 0x00000000E0A0E000, 0x000000E0A0E00000, 0x0000E0A0E0000000, 0x00E0A0E000000000,
@@ -687,7 +683,8 @@ namespace chess
                   SquareRays{0x0000000000000000, 0x0000000000000000, 0x0000000000000000}}}};
     public:
         constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
-        constexpr explicit Board(const char *fenString) { set(fenString); }
+        explicit constexpr Board(const char *fenString) { set(fenString); }
+        explicit Board(const std::string &fenString) { set(fenString.data()); }
 
         [[nodiscard]] std::string fen() const
         {
@@ -730,7 +727,7 @@ namespace chess
             return ss.str();
         }
 
-        void constexpr set(const char *fenString)
+        constexpr void set(const char *fenString)
         {
             m_bitboards = std::array<bitboard_t, 15>{};
             int sqr = 63;
@@ -856,16 +853,25 @@ namespace chess
             }
         }
 
-        bool move(const std::string &uciMove) noexcept
+        constexpr bool move(const std::string &uciMove) noexcept
         {
             auto fromFile = charFile(uciMove[0]);
             auto fromRank = charRank(uciMove[1]);
             auto toFile = charFile(uciMove[2]);
             auto toRank = charRank(uciMove[3]);
 
-            return (m_turn == Color::White) ? moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove)
-                                            : moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
-
+            bool moved;
+            if (m_turn == Color::White)
+            {
+                moved = moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove);
+                if (moved) m_turn = Color::Black;
+            }
+            else
+            {
+                moved = moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
+                if (moved) m_turn = Color::White;
+            }
+            return moved;
         }
     };
 } // namespace chess
