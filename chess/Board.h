@@ -19,7 +19,7 @@ namespace chess
         Color m_turn = Color::White;
 
         template<Color C>
-        constexpr bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string &uciMove)
+        constexpr bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string_view &uciMove)
         {
             auto fromSquare = square(fromFile, fromRank);
             auto fromPiece = piece(fromSquare);
@@ -683,8 +683,7 @@ namespace chess
                   SquareRays{0x0000000000000000, 0x0000000000000000, 0x0000000000000000}}}};
     public:
         constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
-        explicit constexpr Board(const char *fenString) { set(fenString); }
-        explicit Board(const std::string &fenString) { set(fenString.data()); }
+        explicit constexpr Board(const std::string_view &fenString) { set(fenString); }
 
         [[nodiscard]] std::string fen() const
         {
@@ -727,7 +726,7 @@ namespace chess
             return ss.str();
         }
 
-        constexpr void set(const char *fenString)
+        constexpr void set(const std::string_view &fenString)
         {
             m_bitboards = std::array<bitboard_t, 15>{};
             int sqr = 63;
@@ -853,7 +852,7 @@ namespace chess
             }
         }
 
-        constexpr bool move(const std::string &uciMove) noexcept
+        constexpr bool move(const std::string_view &uciMove) noexcept
         {
             auto fromFile = charFile(uciMove[0]);
             auto fromRank = charRank(uciMove[1]);
