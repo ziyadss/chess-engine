@@ -5,7 +5,7 @@ namespace chess
 {
     enum Color { White = 0, Black = 8 };
 
-    consteval Color operator~(Color c) noexcept { return Color(c ^ Color::Black); }
+    constexpr Color operator~(Color c) noexcept { return Color(c ^ Color::Black); }
 
     enum Piece
     {
@@ -28,6 +28,28 @@ namespace chess
         template<Color C> constexpr Piece Bishop = C == Color::White ? Piece::WBishop : Piece::BBishop;
         template<Color C> constexpr Piece Queen = C == Color::White ? Piece::WQueen : Piece::BQueen;
         template<Color C> constexpr Piece King = C == Color::White ? Piece::WKing : Piece::BKing;
+    }
+
+    template<Color C>
+    constexpr Piece charPiece(char c) noexcept
+    {
+        switch (c)
+        {
+            case 'p':
+                return TemplatePiece::Pawn<C>;
+            case 'n':
+                return TemplatePiece::Knight<C>;
+            case 'r':
+                return TemplatePiece::Rook<C>;
+            case 'b':
+                return TemplatePiece::Bishop<C>;
+            case 'q':
+                return TemplatePiece::Queen<C>;
+            case 'k':
+                return TemplatePiece::King<C>;
+            default:
+                return Piece::None;
+        }
     }
 } // namespace chess
 
