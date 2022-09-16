@@ -177,38 +177,22 @@ namespace chess
         }
 
         template<Color C>
-        constexpr bool move(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank) noexcept
+        constexpr void move(bitboard_t fromSquare, Piece fromPiece, bitboard_t toSquare, Piece toPiece) noexcept
         {
-            auto toSquare = square(toFile, toRank);
-
-            auto legalMoves = moves(fromPiece, fromFile, fromRank);
-            if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
-
-            auto toPiece = piece(toSquare);
-
             m_bitboards[fromPiece] ^= (fromSquare | toSquare);
             m_bitboards[C] ^= (fromSquare | toSquare);
             m_bitboards[Piece::None] ^= fromSquare;
 
             m_bitboards[toPiece] ^= toSquare;
             if (toPiece != Piece::None) { m_bitboards[~C] ^= toSquare; }
-
-            return true;
         }
 
         template<Color C>
-        constexpr bool
-        promote(File fromFile, Rank fromRank, bitboard_t fromSquare, Piece fromPiece, File toFile, Rank toRank, Piece piece) noexcept
+        constexpr void promote(bitboard_t fromSquare, Piece fromPiece, bitboard_t toSquare, Piece toPiece, Piece newPiece) noexcept
         {
-            auto valid = piece == ColoredPiece::Knight<C> || piece == ColoredPiece::Rook<C> || piece == ColoredPiece::Bishop<C> ||
-                         piece == ColoredPiece::Queen<C>;
-            if (valid && move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank))
-            {
-                m_bitboards[ColoredPiece::Pawn<C>] ^= square(fromFile, fromRank);
-                m_bitboards[piece] ^= square(toFile, toRank);
-                return true;
-            }
-            return false;
+            move<C>(fromSquare, fromPiece, toSquare, toPiece);
+            m_bitboards[fromPiece] ^= toSquare;
+            m_bitboards[newPiece] ^= toSquare;
         }
 
         template<Color C>
@@ -216,18 +200,28 @@ namespace chess
         {
             auto fromSquare = square(fromFile, fromRank);
             auto fromPiece = piece(fromSquare);
+            auto legalMoves = moves(fromPiece, fromFile, fromRank);
+
+            auto toSquare = square(toFile, toRank);
+            if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
+            auto toPiece = piece(toSquare);
 
             bool promotion = fromPiece == ColoredPiece::Pawn<C> && toRank == Rank::Eight;
             if (!promotion)
             {
-                return move<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank);
+                move<C>(fromSquare, fromPiece, toSquare, toPiece);
             }
             else
             {
                 // If piece is unspecified, assume queen
-                auto p = (uciMove.size() == 4) ? ColoredPiece::Queen<C> : charPiece<C>(uciMove[4]);
-                return promote<C>(fromFile, fromRank, fromSquare, fromPiece, toFile, toRank, p);
+                auto newPiece = (uciMove.size() == 4) ? ColoredPiece::Queen<C> : charPiece<C>(uciMove[4]);
+                auto validPromotion =
+                        newPiece == ColoredPiece::Queen<C> || newPiece == ColoredPiece::Bishop<C> || newPiece == ColoredPiece::Rook<C> ||
+                        newPiece == ColoredPiece::Knight<C>;
+                if (!validPromotion) { return false; }
+                promote<C>(fromSquare, fromPiece, toSquare, toPiece, newPiece);
             }
+            return true;
         }
 
         [[nodiscard]] static constexpr bitboard_t square(int index) noexcept { return s_squares[7 - (index & 7)][index >> 3]; }
