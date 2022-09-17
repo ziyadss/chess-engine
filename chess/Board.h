@@ -18,6 +18,7 @@ namespace chess
         std::array<bitboard_t, 15> m_bitboards{};
         Color m_turn = Color::White;
         bitboard_t m_enPassantSquare = s_emptyBoard;
+        std::array<bool, 4> m_castling{true, true, true, true}; // KQkq
 
         [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr Piece piece(bitboard_t square) const noexcept
@@ -673,7 +674,7 @@ namespace chess
                   SquareRays{0x0000000000000000, 0x0000000000000000, 0x0000000000000000}}}};
     public:
         constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
-        explicit constexpr Board(const std::string_view &fenString) { set(fenString); }
+        explicit constexpr Board(const std::string &fenString) { set(fenString); }
 
         [[nodiscard]] std::string fen() const
         {
@@ -708,22 +709,41 @@ namespace chess
             }
             ss << ' ';
             ss << s_pieceChars[m_turn];
+            ss << ' ';
 
-            // TODO: Castling rights
-            // TODO: En passant square
+            if (m_castling[0]) ss << 'K';
+            if (m_castling[1]) ss << 'Q';
+            if (m_castling[2]) ss << 'k';
+            if (m_castling[3]) ss << 'q';
+            if (!m_castling[0] && !m_castling[1] && !m_castling[2] && !m_castling[3]) ss << '-';
+
+            ss << ' ';
+            if (m_enPassantSquare == s_emptyBoard) ss << '-';
+            else
+            {
+                auto idx = __builtin_ffsll(m_enPassantSquare) - 1;
+                auto file = char('a' + (7 - (idx & 7)));
+                auto rank = char('1' + (idx >> 3));
+
+                ss << file << rank;
+            }
+
             // TODO: Half-move clock
             // TODO: Full-move number
             return ss.str();
         }
 
-        constexpr void set(const std::string_view &fenString)
+        void set(const std::string &fenString)
         {
+            auto ss = std::istringstream(fenString);
+            std::string token;
+            ss >> token;
+
             m_bitboards = std::array<bitboard_t, 15>{};
             int sqr = 63;
-            size_t fenIdx = 0;
-            while (fenString[fenIdx] != ' ')
+            for (auto c: token)
             {
-                switch (fenString[fenIdx++])
+                switch (c)
                 {
                     case 'r':
                         m_bitboards[Piece::BRook] |= square(sqr--);
@@ -787,6 +807,8 @@ namespace chess
                     case '8':
                         sqr -= 8;
                         break;
+                    default:
+                        throw std::runtime_error("Invalid FEN string");
                 }
             }
 
@@ -800,10 +822,19 @@ namespace chess
 
             m_bitboards[Piece::None] = ~m_bitboards[Color::White] & ~m_bitboards[Color::Black];
 
-            m_turn = fenString[++fenIdx] == 'w' ? Color::White : Color::Black;
+            ss >> token;
+            m_turn = token == "w" ? Color::White : Color::Black;
 
-            // TODO: Castling rights
-            // TODO: En passant square
+            ss >> token;
+
+            m_castling[0] = token.find('K') != std::string::npos;
+            m_castling[1] = token.find('Q') != std::string::npos;
+            m_castling[2] = token.find('k') != std::string::npos;
+            m_castling[3] = token.find('q') != std::string::npos;
+
+            ss >> token;
+            m_enPassantSquare = token == "-" ? s_emptyBoard : square(charFile(token[0]), charRank(token[1]));
+
             // TODO: Half-move clock
             // TODO: Full-move number
         }
