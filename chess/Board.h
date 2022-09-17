@@ -7,6 +7,7 @@
 #include "Piece.h"
 #include "File.h"
 #include "Rank.h"
+#include "Result.h"
 
 namespace chess
 {
@@ -959,19 +960,69 @@ namespace chess
             // TODO: Full-move number
         }
 
-        constexpr bool move(const std::string_view &uciMove) noexcept
+        template<Color C>
+        [[nodiscard]] constexpr bool checkMate() const noexcept
+        {
+            if (inCheck<C>())
+                for (int f = 0; f < 8; f++)
+                    for (int r = 0; r < 8; r++)
+                    {
+                        const auto file = File(f);
+                        const auto rank = Rank(r);
+                        const auto sqr = square(file, rank);
+                        if (sqr & m_bitboards[C])
+                        {
+                            const auto p = piece(sqr);
+                            if (p != Piece::None && moves(p, file, rank)) return false;
+                        }
+                    }
+
+            return true;
+        }
+
+        constexpr Result move(const std::string_view &uciMove) noexcept
         {
             const auto fromFile = charFile(uciMove[0]);
             const auto fromRank = charRank(uciMove[1]);
             const auto toFile = charFile(uciMove[2]);
             const auto toRank = charRank(uciMove[3]);
 
-            const bool moved = (m_turn == Color::White) ? moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove)
-                                                        : moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
+            if (m_turn == Color::White)
+            {
+                const bool moved = moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove);
+                if (!moved) return Result::IllegalMove;
 
-            if (moved) { m_turn = ~m_turn; }
+                m_turn = Color::Black;
+                if (checkMate<Color::Black>()) return Result::WhiteWin;
+            }
+            else if (m_turn == Color::Black)
+            {
+                const bool moved = moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
+                if (!moved) return Result::IllegalMove;
 
-            return moved;
+                m_turn = Color::White;
+                if (checkMate<Color::White>()) return Result::BlackWin;
+            }
+
+            return Result::LegalMove;
+        }
+
+        [[nodiscard]] std::string display() const noexcept
+        {
+            auto ss = std::ostringstream();
+            ss << "  | a | b | c | d | e | f | g | h |\n"
+                  "  +---+---+---+---+---+---+---+---+\n";
+            for (int r = 7; r >= 0; r--)
+            {
+                ss << r + 1 << " |";
+                for (int f = 0; f < 8; f++)
+                    ss << " " << s_pieceChars[piece(square(File(f), Rank(r)))] << " |";
+
+                ss << " " << r + 1 << "\n";
+                ss << "  +---+---+---+---+---+---+---+---+\n";
+            }
+            ss << "  | a | b | c | d | e | f | g | h |\n";
+            return ss.str();
         }
     };
 } // namespace chess
