@@ -197,6 +197,84 @@ namespace chess
         }
 
         template<Color C>
+        [[nodiscard]] constexpr std::pair<bool, bitboard_t> validateCastlingDestination(bitboard_t toSquare) noexcept
+        {
+            // Yes castling is ugly. It's the last thing left here and I just want to get it working.
+            // TODO: Clean.
+            if constexpr (C == Color::White)
+            {
+                if (toSquare == square(File::C, Rank::One))
+                {
+                    const auto shouldBeEmpty = square(File::B, Rank::One) | square(File::C, Rank::One) | square(File::D, Rank::One);
+                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    {
+                        const bool passedChecks =
+                                attackedBy<Color::Black>(File::C, Rank::One) || attackedBy<Color::Black>(File::D, Rank::One) ||
+                                attackedBy<Color::Black>(File::E, Rank::One);
+                        if (!passedChecks)
+                        {
+                            const bool result = m_castling[1];
+                            m_castling[1] = false;
+                            return {result, square(File::D, Rank::One)};
+                        }
+                    }
+                }
+                else if (toSquare == square(File::G, Rank::One))
+                {
+                    const auto shouldBeEmpty = square(File::F, Rank::One) | square(File::G, Rank::One);
+                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    {
+                        const bool passedChecks =
+                                attackedBy<Color::Black>(File::E, Rank::One) || attackedBy<Color::Black>(File::F, Rank::One) ||
+                                attackedBy<Color::Black>(File::G, Rank::One);
+                        if (!passedChecks)
+                        {
+                            const bool result = m_castling[0];
+                            m_castling[0] = false;
+                            return {result, square(File::F, Rank::One)};
+                        }
+                    }
+                }
+            }
+            else if constexpr (C == Color::Black)
+            {
+                if (toSquare == square(File::C, Rank::Eight))
+                {
+                    const auto shouldBeEmpty = square(File::B, Rank::Eight) | square(File::C, Rank::Eight) | square(File::D, Rank::Eight);
+                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    {
+                        const bool passedChecks =
+                                attackedBy<Color::White>(File::C, Rank::Eight) || attackedBy<Color::White>(File::D, Rank::Eight) ||
+                                attackedBy<Color::White>(File::E, Rank::Eight);
+                        if (!passedChecks)
+                        {
+                            const bool result = m_castling[3];
+                            m_castling[3] = false;
+                            return {result, square(File::D, Rank::Eight)};
+                        }
+                    }
+                }
+                else if (toSquare == square(File::G, Rank::Eight))
+                {
+                    const auto shouldBeEmpty = square(File::F, Rank::Eight) | square(File::G, Rank::Eight);
+                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    {
+                        const bool passedChecks =
+                                attackedBy<Color::White>(File::E, Rank::Eight) || attackedBy<Color::White>(File::F, Rank::Eight) ||
+                                attackedBy<Color::White>(File::G, Rank::Eight);
+                        if (!passedChecks)
+                        {
+                            const bool result = m_castling[2];
+                            m_castling[2] = false;
+                            return {result, square(File::F, Rank::Eight)};
+                        }
+                    }
+                }
+            }
+            return {false, s_emptyBoard};
+        }
+
+        template<Color C>
         [[nodiscard]] static consteval bitboard_t castlingSquares() noexcept
         {
             const auto rank = (C == Color::White) ? Rank::One : Rank::Eight;
@@ -212,6 +290,48 @@ namespace chess
             const auto legalMoves = moves(fromPiece, fromFile, fromRank);
 
             const auto toSquare = square(toFile, toRank);
+
+            const auto king = ColoredPiece::King<C>;
+            const bool kingMove = fromPiece == king;
+            const bool isCastle = kingMove && fromSquare == s_startingPosition[king] && (toSquare | castlingSquares<C>());
+            if (isCastle)
+            {
+                const auto [canCastle, rookSquare] = validateCastlingDestination<C>(toSquare);
+                if (!canCastle) { return false; }
+
+                const auto rook = ColoredPiece::Rook<C>;
+                move<C>(fromSquare, fromPiece, toSquare, Piece::None);
+                move<C>(s_startingPosition[rook], rook, rookSquare, Piece::None);
+                return true;
+            }
+
+            if (kingMove)
+            {
+                if constexpr (C == Color::White)
+                {
+                    m_castling[0] = false;
+                    m_castling[1] = false;
+                }
+                else if constexpr (C == Color::Black)
+                {
+                    m_castling[2] = false;
+                    m_castling[3] = false;
+                }
+            }
+            else if (fromPiece == ColoredPiece::Rook<C>)
+            {
+                if constexpr (C == Color::White)
+                {
+                    if (fromSquare == square(File::H, Rank::One)) { m_castling[0] = false; }
+                    else if (fromSquare == square(File::A, Rank::One)) { m_castling[1] = false; }
+                }
+                else if constexpr (C == Color::Black)
+                {
+                    if (fromSquare == square(File::H, Rank::Eight)) { m_castling[2] = false; }
+                    else if (fromSquare == square(File::A, Rank::Eight)) { m_castling[3] = false; }
+                }
+            }
+
             if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
             const auto toPiece = piece(toSquare);
 
