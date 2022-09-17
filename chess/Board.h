@@ -32,9 +32,9 @@ namespace chess
         template<Piece P>
         [[nodiscard]] constexpr std::pair<File, Rank> find() const noexcept
         {
-            auto bitLocation = __builtin_ffsll(m_bitboards[P]) - 1;
-            auto f = 7 - (bitLocation & 7);
-            auto r = bitLocation >> 3;
+            const auto bitLocation = __builtin_ffsll(m_bitboards[P]) - 1;
+            const auto f = 7 - (bitLocation & 7);
+            const auto r = bitLocation >> 3;
             return {File(f), Rank(r)};
         }
 
@@ -50,7 +50,7 @@ namespace chess
 
             const Color opponent = ~C;
 
-            auto occupied = all();
+            const auto occupied = all();
             return (pawnAttacks<opponent>(f, r) & m_bitboards[pawn]) |
                    (rookMoves<opponent>(f, r, occupied) & (m_bitboards[rook] | m_bitboards[queen])) |
                    (knightMoves<opponent>(f, r) & m_bitboards[knight]) |
@@ -77,19 +77,19 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnMoves(File f, Rank r) const noexcept
         {
-            auto empty = m_bitboards[Piece::None];
-            auto attacks = pawnAttacks<C>(f, r);
+            const auto empty = m_bitboards[Piece::None];
+            const auto attacks = pawnAttacks<C>(f, r);
 
             if constexpr (C == Color::White)
             {
-                auto moves = s_wPawnMoves[f][r] & empty;
-                auto doubleMoves = r == Rank::Two ? (moves << 8) & empty : s_emptyBoard;
+                const auto moves = s_wPawnMoves[f][r] & empty;
+                const auto doubleMoves = r == Rank::Two ? (moves << 8) & empty : s_emptyBoard;
                 return attacks | moves | doubleMoves;
             }
             else if constexpr (C == Color::Black)
             {
-                auto moves = s_bPawnMoves[f][r] & empty;
-                auto doubleMoves = r == Rank::Seven ? (moves >> 8) & empty : s_emptyBoard;
+                const auto moves = s_bPawnMoves[f][r] & empty;
+                const auto doubleMoves = r == Rank::Seven ? (moves >> 8) & empty : s_emptyBoard;
                 return attacks | moves | doubleMoves;
             }
         }
@@ -198,20 +198,20 @@ namespace chess
         template<Color C>
         constexpr bool moveHelper(File fromFile, Rank fromRank, File toFile, Rank toRank, const std::string_view &uciMove)
         {
-            auto fromSquare = square(fromFile, fromRank);
-            auto fromPiece = piece(fromSquare);
-            auto legalMoves = moves(fromPiece, fromFile, fromRank);
+            const auto fromSquare = square(fromFile, fromRank);
+            const auto fromPiece = piece(fromSquare);
+            const auto legalMoves = moves(fromPiece, fromFile, fromRank);
 
-            auto toSquare = square(toFile, toRank);
+            const auto toSquare = square(toFile, toRank);
             if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
-            auto toPiece = piece(toSquare);
+            const auto toPiece = piece(toSquare);
 
-            bool promotion = fromPiece == ColoredPiece::Pawn<C> && toRank == Rank::Eight;
+            const bool promotion = fromPiece == ColoredPiece::Pawn<C> && toRank == Rank::Eight;
             if (!promotion)
             {
                 move<C>(fromSquare, fromPiece, toSquare, toPiece);
 
-                bool doublePush = (fromPiece == Piece::WPawn && fromRank == Rank::Two && toRank == Rank::Four) ||
+                const bool doublePush = (fromPiece == Piece::WPawn && fromRank == Rank::Two && toRank == Rank::Four) ||
                                   (fromPiece == Piece::BPawn && fromRank == Rank::Seven && toRank == Rank::Five);
 
                 m_enPassantSquare = doublePush ? toSquare >> 8 : s_emptyBoard;
@@ -219,8 +219,8 @@ namespace chess
             else
             {
                 // If piece is unspecified, assume queen
-                auto newPiece = (uciMove.size() == 4) ? ColoredPiece::Queen<C> : charPiece<C>(uciMove[4]);
-                auto validPromotion =
+                const auto newPiece = (uciMove.size() == 4) ? ColoredPiece::Queen<C> : charPiece<C>(uciMove[4]);
+                const auto validPromotion =
                         newPiece == ColoredPiece::Queen<C> || newPiece == ColoredPiece::Bishop<C> || newPiece == ColoredPiece::Rook<C> ||
                         newPiece == ColoredPiece::Knight<C>;
                 if (!validPromotion) { return false; }
@@ -672,13 +672,13 @@ namespace chess
             int emptyCount = 0;
             for (auto idx = 63; idx >= 0; idx--)
             {
-                auto p = piece(square(idx));
+                const auto p = piece(square(idx));
 
-                bool empty = p == Piece::None;
+                const bool empty = p == Piece::None;
                 emptyCount += empty;
 
-                bool endRank = idx % 8 == 0;
-                bool printEmpty = ((!empty || endRank) && emptyCount > 0);
+                const bool endRank = idx % 8 == 0;
+                const bool printEmpty = ((!empty || endRank) && emptyCount > 0);
 
                 if (printEmpty)
                 {
@@ -801,12 +801,12 @@ namespace chess
 
         constexpr bool move(const std::string_view &uciMove) noexcept
         {
-            auto fromFile = charFile(uciMove[0]);
-            auto fromRank = charRank(uciMove[1]);
-            auto toFile = charFile(uciMove[2]);
-            auto toRank = charRank(uciMove[3]);
+            const auto fromFile = charFile(uciMove[0]);
+            const auto fromRank = charRank(uciMove[1]);
+            const auto toFile = charFile(uciMove[2]);
+            const auto toRank = charRank(uciMove[3]);
 
-            bool moved = (m_turn == Color::White) ? moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove)
+            const bool moved = (m_turn == Color::White) ? moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove)
                                                   : moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
 
             if (moved) { m_turn = ~m_turn; }
