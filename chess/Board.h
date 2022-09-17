@@ -17,6 +17,7 @@ namespace chess
 
         std::array<bitboard_t, 15> m_bitboards{};
         Color m_turn = Color::White;
+        bitboard_t m_enPassantSquare = s_emptyBoard;
 
         [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~m_bitboards[Piece::None]; }
         [[nodiscard]] constexpr Piece piece(bitboard_t square) const noexcept
@@ -63,15 +64,14 @@ namespace chess
             const Piece king = ColoredPiece::King<C>;
             const auto [f, r] = find<king>();
 
-            const Color opponent = ~C;
-            return attackedBy<opponent>(f, r) != s_emptyBoard;
+            return attackedBy<~C>(f, r) != s_emptyBoard;
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnAttacks(File f, Rank r) const noexcept
         {
-            if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & m_bitboards[Color::Black]);
-            else if constexpr (C == Color::Black) return (s_bPawnAttacks[f][r] & m_bitboards[Color::White]);
+            if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & (m_bitboards[Color::Black] | m_enPassantSquare));
+            else if constexpr (C == Color::Black) return (s_bPawnAttacks[f][r] & (m_bitboards[Color::White] | m_enPassantSquare));
         }
 
         template<Color C>
@@ -210,6 +210,11 @@ namespace chess
             if (!promotion)
             {
                 move<C>(fromSquare, fromPiece, toSquare, toPiece);
+
+                bool doublePush = (fromPiece == Piece::WPawn && fromRank == Rank::Two && toRank == Rank::Four) ||
+                                  (fromPiece == Piece::BPawn && fromRank == Rank::Seven && toRank == Rank::Five);
+
+                m_enPassantSquare = doublePush ? toSquare >> 8 : s_emptyBoard;
             }
             else
             {
@@ -220,6 +225,7 @@ namespace chess
                         newPiece == ColoredPiece::Knight<C>;
                 if (!validPromotion) { return false; }
                 promote<C>(fromSquare, fromPiece, toSquare, toPiece, newPiece);
+                m_enPassantSquare = s_emptyBoard;
             }
             return true;
         }
@@ -800,17 +806,11 @@ namespace chess
             auto toFile = charFile(uciMove[2]);
             auto toRank = charRank(uciMove[3]);
 
-            bool moved;
-            if (m_turn == Color::White)
-            {
-                moved = moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove);
-                if (moved) m_turn = Color::Black;
-            }
-            else
-            {
-                moved = moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
-                if (moved) m_turn = Color::White;
-            }
+            bool moved = (m_turn == Color::White) ? moveHelper<Color::White>(fromFile, fromRank, toFile, toRank, uciMove)
+                                                  : moveHelper<Color::Black>(fromFile, fromRank, toFile, toRank, uciMove);
+
+            if (moved) { m_turn = ~m_turn; }
+
             return moved;
         }
     };
