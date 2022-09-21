@@ -1,9 +1,12 @@
 #ifndef CHESS_ENGINE_RESULT_H
 #define CHESS_ENGINE_RESULT_H
 
-enum class Result
+namespace chess
 {
-    LegalMove, IllegalMove, WhiteWin, BlackWin, Draw
-};
+    enum class Result
+    {
+        LegalMove, IllegalMove, WhiteWin, BlackWin, Draw
+    };
+} // namespace chess
 
 #endif // CHESS_ENGINE_RESULT_H
