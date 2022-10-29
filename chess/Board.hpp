@@ -1,5 +1,5 @@
-#ifndef CHESS_ENGINE_BOARD_H
-#define CHESS_ENGINE_BOARD_H
+#ifndef CHESS_ENGINE_BOARD_HPP
+#define CHESS_ENGINE_BOARD_HPP
 
 #include <array>
 #include <sstream>
@@ -1044,4 +1044,4 @@ namespace chess
     };
 } // namespace chess
 
-#endif // CHESS_ENGINE_BOARD_H
+#endif // CHESS_ENGINE_BOARD_HPP

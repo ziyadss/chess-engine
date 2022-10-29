@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "chess/Board.h"
+#include "chess/Board.hpp"
 
 int main()
 {
