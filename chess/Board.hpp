@@ -409,7 +409,7 @@ namespace chess
             return rookMoves(f, r, occupancy) | bishopMoves(f, r, occupancy);
         }
 
-        static constexpr const bitboard_t s_emptyBoard = 0;
+        static constexpr const bitboard_t s_emptyBoard = 0x00;
         static constexpr const std::array<Piece, 12> s_piecesList{Piece::WPawn, Piece::WRook, Piece::WKnight, Piece::WBishop, Piece::WQueen,
                                                                   Piece::WKing, Piece::BPawn, Piece::BRook, Piece::BKnight, Piece::BBishop,
                                                                   Piece::BQueen, Piece::BKing};

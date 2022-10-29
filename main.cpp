@@ -18,7 +18,7 @@ int main()
         if (moveResult == chess::Result::IllegalMove)
             std::cout << "Invalid move" << std::endl;
 
-        std::cout << "moveResult = " << static_cast<int>(moveResult) << std::endl << std::endl;
+        std::cout << "moveResult = " << std::to_underlying(moveResult) << std::endl << std::endl;
     }
 
     auto moves = {"a2a4", "a7a5", "b2b4", "b7b5", "b1c3", "b8c6", "c1a3", "c8a6", "d2d4", "d7d5", "d1d3", "d8d6", "e1c1"};
