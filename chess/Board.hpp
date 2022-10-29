@@ -16,7 +16,7 @@ namespace chess
         using bitboard_t = uint64_t;
         static_assert(sizeof(bitboard_t) == 8, "bitboard_t must be 64 bits");
 
-        std::array<bitboard_t, 15> m_bitboards{};
+        std::array<bitboard_t, 15> m_bitboards;
         Color m_turn = Color::White;
         bitboard_t m_enPassantSquare = s_emptyBoard;
         std::array<bool, 4> m_castling{true, true, true, true}; // KQkq
@@ -879,7 +879,7 @@ namespace chess
             std::string token;
             ss >> token;
 
-            m_bitboards = std::array<bitboard_t, 15>{};
+            m_bitboards = std::array<bitboard_t, 15>();
             int sqr = 63;
             for (auto c: token)
             {
