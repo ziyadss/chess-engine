@@ -21,11 +21,17 @@ namespace chess
         bitboard_t m_enPassantSquare = s_emptyBoard;
         std::array<bool, 4> m_castling{true, true, true, true}; // KQkq
 
-        [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~m_bitboards[Piece::None]; }
+        [[nodiscard]] constexpr bitboard_t bitboard(Piece p) const noexcept { return m_bitboards[std::to_underlying(p)]; }
+        [[nodiscard]] constexpr bitboard_t bitboard(Color c) const noexcept { return m_bitboards[std::to_underlying(c)]; }
+
+        [[nodiscard]] constexpr bitboard_t &bitboard(Piece p) noexcept { return m_bitboards[std::to_underlying(p)]; }
+        [[nodiscard]] constexpr bitboard_t &bitboard(Color c) noexcept { return m_bitboards[std::to_underlying(c)]; }
+
+        [[nodiscard]] constexpr bitboard_t all() const noexcept { return ~bitboard(Piece::None); }
         [[nodiscard]] constexpr Piece piece(bitboard_t square) const noexcept
         {
             for (const auto &p: s_piecesList)
-                if (m_bitboards[p] & square)
+                if (bitboard(p) & square)
                     return p;
 
             return Piece::None;
@@ -34,7 +40,7 @@ namespace chess
         template<Piece P>
         [[nodiscard]] constexpr std::pair<File, Rank> find() const noexcept
         {
-            const auto bitLocation = __builtin_ffsll(m_bitboards[P]) - 1;
+            const auto bitLocation = __builtin_ffsll(bitboard(P)) - 1;
             const auto f = 7 - (bitLocation & 7);
             const auto r = bitLocation >> 3;
             return {File(f), Rank(r)};
@@ -43,54 +49,57 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bitboard_t attackedBy(File f, Rank r) const noexcept
         {
-            const auto pawn = ColoredPiece::Pawn<C>;
-            const auto knight = ColoredPiece::Knight<C>;
-            const auto rook = ColoredPiece::Rook<C>;
-            const auto bishop = ColoredPiece::Bishop<C>;
-            const auto queen = ColoredPiece::Queen<C>;
-            const auto king = ColoredPiece::King<C>;
+            const auto pawn = Colored::Pawn<C>;
+            const auto knight = Colored::Knight<C>;
+            const auto rook = Colored::Rook<C>;
+            const auto bishop = Colored::Bishop<C>;
+            const auto queen = Colored::Queen<C>;
+            const auto king = Colored::King<C>;
 
-            const auto opponentColor = ~C;
+            const auto opponentColor = Colored::Opposite<C>;
 
             const auto occupied = all();
-            return (pawnAttacks<opponentColor>(f, r) & m_bitboards[pawn]) |
-                   (rookMoves<opponentColor>(f, r, occupied) & (m_bitboards[rook] | m_bitboards[queen])) |
-                   (knightMoves<opponentColor>(f, r) & m_bitboards[knight]) |
-                   (bishopMoves<opponentColor>(f, r, occupied) & (m_bitboards[bishop] | m_bitboards[queen])) |
-                   (kingMoves<opponentColor>(f, r) & m_bitboards[king]);
+            return (pawnAttacks<opponentColor>(f, r) & bitboard(pawn)) |
+                   (rookMoves<opponentColor>(f, r, occupied) & (bitboard(rook) | bitboard(queen))) |
+                   (knightMoves<opponentColor>(f, r) & bitboard(knight)) |
+                   (bishopMoves<opponentColor>(f, r, occupied) & (bitboard(bishop) | bitboard(queen))) |
+                   (kingMoves<opponentColor>(f, r) & bitboard(king));
         }
 
         template<Color C>
         [[nodiscard]] constexpr bool inCheck() const noexcept
         {
-            const auto king = ColoredPiece::King<C>;
+            const auto king = Colored::King<C>;
             const auto [f, r] = find<king>();
 
-            return attackedBy<~C>(f, r) != s_emptyBoard;
+            const auto opponentColor = Colored::Opposite<C>;
+            return attackedBy<opponentColor>(f, r) != s_emptyBoard;
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnAttacks(File f, Rank r) const noexcept
         {
-            if constexpr (C == Color::White) return (s_wPawnAttacks[f][r] & (m_bitboards[Color::Black] | m_enPassantSquare));
-            else if constexpr (C == Color::Black) return (s_bPawnAttacks[f][r] & (m_bitboards[Color::White] | m_enPassantSquare));
+            if constexpr (C == Color::White)
+                return (s_wPawnAttacks[std::to_underlying(f)][std::to_underlying(r)] & (bitboard(Color::Black) | m_enPassantSquare));
+            else if constexpr (C == Color::Black)
+                return (s_bPawnAttacks[std::to_underlying(f)][std::to_underlying(r)] & (bitboard(Color::White) | m_enPassantSquare));
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t pawnMoves(File f, Rank r) const noexcept
         {
-            const auto empty = m_bitboards[Piece::None];
+            const auto empty = bitboard(Piece::None);
             const auto attacks = pawnAttacks<C>(f, r);
 
             if constexpr (C == Color::White)
             {
-                const auto moves = s_wPawnMoves[f][r] & empty;
+                const auto moves = s_wPawnMoves[std::to_underlying(f)][std::to_underlying(r)] & empty;
                 const auto doubleMoves = r == Rank::Two ? (moves << 8) & empty : s_emptyBoard;
                 return attacks | moves | doubleMoves;
             }
             else if constexpr (C == Color::Black)
             {
-                const auto moves = s_bPawnMoves[f][r] & empty;
+                const auto moves = s_bPawnMoves[std::to_underlying(f)][std::to_underlying(r)] & empty;
                 const auto doubleMoves = r == Rank::Seven ? (moves >> 8) & empty : s_emptyBoard;
                 return attacks | moves | doubleMoves;
             }
@@ -99,31 +108,31 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bitboard_t knightMoves(File f, Rank r) const noexcept
         {
-            return s_knightMoves[f][r] & ~m_bitboards[C];
+            return s_knightMoves[std::to_underlying(f)][std::to_underlying(r)] & ~bitboard(C);
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t kingMoves(File f, Rank r) const noexcept
         {
-            return s_kingMoves[f][r] & ~m_bitboards[C];
+            return s_kingMoves[std::to_underlying(f)][std::to_underlying(r)] & ~bitboard(C);
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) const noexcept
         {
-            return rookMoves(f, r, occupancy) & ~m_bitboards[C];
+            return rookMoves(f, r, occupancy) & ~bitboard(C);
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t bishopMoves(File f, Rank r, bitboard_t occupancy) const noexcept
         {
-            return bishopMoves(f, r, occupancy) & ~m_bitboards[C];
+            return bishopMoves(f, r, occupancy) & ~bitboard(C);
         }
 
         template<Color C>
         [[nodiscard]] constexpr bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy) const noexcept
         {
-            return queenMoves(f, r, occupancy) & ~m_bitboards[C];
+            return queenMoves(f, r, occupancy) & ~bitboard(C);
         }
 
         template<Piece P>
@@ -172,7 +181,7 @@ namespace chess
                     return moves<Piece::BQueen>(f, r);
                 case Piece::BKing:
                     return moves<Piece::BKing>(f, r);
-                case None:
+                case Piece::None:
                 default:
                     return s_emptyBoard;
             }
@@ -181,20 +190,24 @@ namespace chess
         template<Color C>
         constexpr void move(bitboard_t fromSquare, Piece fromPiece, bitboard_t toSquare, Piece toPiece) noexcept
         {
-            m_bitboards[fromPiece] ^= (fromSquare | toSquare);
-            m_bitboards[C] ^= (fromSquare | toSquare);
-            m_bitboards[Piece::None] ^= fromSquare;
+            bitboard(fromPiece) ^= (fromSquare | toSquare);
+            bitboard(C) ^= (fromSquare | toSquare);
+            bitboard(Piece::None) ^= fromSquare;
 
-            m_bitboards[toPiece] ^= toSquare;
-            if (toPiece != Piece::None) { m_bitboards[~C] ^= toSquare; }
+            bitboard(toPiece) ^= toSquare;
+            if (toPiece != Piece::None)
+            {
+                const auto oppositeColor = Colored::Opposite<C>;
+                bitboard(oppositeColor) ^= toSquare;
+            }
         }
 
         template<Color C>
         constexpr void promote(bitboard_t fromSquare, Piece fromPiece, bitboard_t toSquare, Piece toPiece, Piece newPiece) noexcept
         {
             move<C>(fromSquare, fromPiece, toSquare, toPiece);
-            m_bitboards[fromPiece] ^= toSquare;
-            m_bitboards[newPiece] ^= toSquare;
+            bitboard(fromPiece) ^= toSquare;
+            bitboard(newPiece) ^= toSquare;
         }
 
         template<Color C>
@@ -207,7 +220,7 @@ namespace chess
                 if (toSquare == square(File::C, Rank::One))
                 {
                     const auto shouldBeEmpty = square(File::B, Rank::One) | square(File::C, Rank::One) | square(File::D, Rank::One);
-                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    if ((bitboard(Piece::None) & shouldBeEmpty) == shouldBeEmpty)
                     {
                         const bool passedChecks =
                                 attackedBy<Color::Black>(File::C, Rank::One) || attackedBy<Color::Black>(File::D, Rank::One) ||
@@ -223,7 +236,7 @@ namespace chess
                 else if (toSquare == square(File::G, Rank::One))
                 {
                     const auto shouldBeEmpty = square(File::F, Rank::One) | square(File::G, Rank::One);
-                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    if ((bitboard(Piece::None) & shouldBeEmpty) == shouldBeEmpty)
                     {
                         const bool passedChecks =
                                 attackedBy<Color::Black>(File::E, Rank::One) || attackedBy<Color::Black>(File::F, Rank::One) ||
@@ -242,7 +255,7 @@ namespace chess
                 if (toSquare == square(File::C, Rank::Eight))
                 {
                     const auto shouldBeEmpty = square(File::B, Rank::Eight) | square(File::C, Rank::Eight) | square(File::D, Rank::Eight);
-                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    if ((bitboard(Piece::None) & shouldBeEmpty) == shouldBeEmpty)
                     {
                         const bool passedChecks =
                                 attackedBy<Color::White>(File::C, Rank::Eight) || attackedBy<Color::White>(File::D, Rank::Eight) ||
@@ -258,7 +271,7 @@ namespace chess
                 else if (toSquare == square(File::G, Rank::Eight))
                 {
                     const auto shouldBeEmpty = square(File::F, Rank::Eight) | square(File::G, Rank::Eight);
-                    if ((m_bitboards[Piece::None] & shouldBeEmpty) == shouldBeEmpty)
+                    if ((bitboard(Piece::None) & shouldBeEmpty) == shouldBeEmpty)
                     {
                         const bool passedChecks =
                                 attackedBy<Color::White>(File::E, Rank::Eight) || attackedBy<Color::White>(File::F, Rank::Eight) ||
@@ -292,17 +305,18 @@ namespace chess
 
             const auto toSquare = square(toFile, toRank);
 
-            const auto king = ColoredPiece::King<C>;
+            const auto king = Colored::King<C>;
             const bool kingMove = fromPiece == king;
-            const bool isCastle = kingMove && fromSquare == s_startingPosition[king] && (toSquare | castlingSquares<C>());
+            const bool isCastle =
+                    kingMove && fromSquare == s_startingPosition[std::to_underlying(king)] && (toSquare | castlingSquares<C>());
             if (isCastle)
             {
                 const auto [canCastle, rookSquare] = validateCastlingDestination<C>(toSquare);
                 if (!canCastle) { return false; }
 
-                const auto rook = ColoredPiece::Rook<C>;
+                const auto rook = Colored::Rook<C>;
                 move<C>(fromSquare, fromPiece, toSquare, Piece::None);
-                move<C>(s_startingPosition[rook], rook, rookSquare, Piece::None);
+                move<C>(s_startingPosition[std::to_underlying(rook)], rook, rookSquare, Piece::None);
                 return true;
             }
 
@@ -319,7 +333,7 @@ namespace chess
                     m_castling[3] = false;
                 }
             }
-            else if (fromPiece == ColoredPiece::Rook<C>)
+            else if (fromPiece == Colored::Rook<C>)
             {
                 if constexpr (C == Color::White)
                 {
@@ -336,7 +350,7 @@ namespace chess
             if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
             const auto toPiece = piece(toSquare);
 
-            const bool promotion = fromPiece == ColoredPiece::Pawn<C> && toRank == Rank::Eight;
+            const bool promotion = fromPiece == Colored::Pawn<C> && toRank == Rank::Eight;
             if (!promotion)
             {
                 move<C>(fromSquare, fromPiece, toSquare, toPiece);
@@ -350,10 +364,10 @@ namespace chess
             else
             {
                 // If piece is unspecified, assume queen
-                const auto newPiece = (uciMove.size() == 4) ? ColoredPiece::Queen<C> : charPiece<C>(uciMove[4]);
+                const auto newPiece = (uciMove.size() == 4) ? Colored::Queen<C> : charPiece<C>(uciMove[4]);
                 const bool validPromotion =
-                        newPiece == ColoredPiece::Queen<C> || newPiece == ColoredPiece::Bishop<C> || newPiece == ColoredPiece::Rook<C> ||
-                        newPiece == ColoredPiece::Knight<C>;
+                        newPiece == Colored::Queen<C> || newPiece == Colored::Bishop<C> || newPiece == Colored::Rook<C> ||
+                        newPiece == Colored::Knight<C>;
                 if (!validPromotion) { return false; }
                 promote<C>(fromSquare, fromPiece, toSquare, toPiece, newPiece);
                 m_enPassantSquare = s_emptyBoard;
@@ -363,7 +377,10 @@ namespace chess
 
         [[nodiscard]] static constexpr bitboard_t square(int index) noexcept { return s_squares[7 - (index & 7)][index >> 3]; }
 
-        [[nodiscard]] static constexpr bitboard_t square(File f, Rank r) noexcept { return s_squares[f][r]; }
+        [[nodiscard]] static constexpr bitboard_t square(File f, Rank r) noexcept
+        {
+            return s_squares[std::to_underlying(f)][std::to_underlying(r)];
+        }
 
         struct SquareRays { bitboard_t lower, upper, line; };
         [[nodiscard]] static constexpr bitboard_t lineAttacks(bitboard_t occupancy, const SquareRays &rays) noexcept
@@ -377,12 +394,14 @@ namespace chess
 
         [[nodiscard]] static constexpr bitboard_t rookMoves(File f, Rank r, bitboard_t occupancy) noexcept
         {
-            return lineAttacks(occupancy, s_fileRays[f][r]) | lineAttacks(occupancy, s_rankRays[f][r]);
+            return lineAttacks(occupancy, s_fileRays[std::to_underlying(f)][std::to_underlying(r)]) |
+                   lineAttacks(occupancy, s_rankRays[std::to_underlying(f)][std::to_underlying(r)]);
         }
 
         [[nodiscard]] static constexpr bitboard_t bishopMoves(File f, Rank r, bitboard_t occupancy) noexcept
         {
-            return lineAttacks(occupancy, s_diagonalRays[f][r]) | lineAttacks(occupancy, s_antidiagonalRays[f][r]);
+            return lineAttacks(occupancy, s_diagonalRays[std::to_underlying(f)][std::to_underlying(r)]) |
+                   lineAttacks(occupancy, s_antidiagonalRays[std::to_underlying(f)][std::to_underlying(r)]);
         }
 
         [[nodiscard]] static constexpr bitboard_t queenMoves(File f, Rank r, bitboard_t occupancy) noexcept
@@ -819,7 +838,7 @@ namespace chess
 
                 if (!empty)
                 {
-                    ss << s_pieceChars[p];
+                    ss << s_pieceChars[std::to_underlying(p)];
                 }
 
                 if (endRank && idx != 0)
@@ -829,7 +848,7 @@ namespace chess
 
             }
             ss << ' ';
-            ss << s_pieceChars[m_turn];
+            ss << s_pieceChars[std::to_underlying(m_turn)];
             ss << ' ';
 
             if (m_castling[0]) ss << 'K';
@@ -867,40 +886,40 @@ namespace chess
                 switch (c)
                 {
                     case 'r':
-                        m_bitboards[Piece::BRook] |= square(sqr--);
+                        bitboard(Piece::BRook) |= square(sqr--);
                         break;
                     case 'n':
-                        m_bitboards[Piece::BKnight] |= square(sqr--);
+                        bitboard(Piece::BKnight) |= square(sqr--);
                         break;
                     case 'b':
-                        m_bitboards[Piece::BBishop] |= square(sqr--);
+                        bitboard(Piece::BBishop) |= square(sqr--);
                         break;
                     case 'q':
-                        m_bitboards[Piece::BQueen] |= square(sqr--);
+                        bitboard(Piece::BQueen) |= square(sqr--);
                         break;
                     case 'k':
-                        m_bitboards[Piece::BKing] |= square(sqr--);
+                        bitboard(Piece::BKing) |= square(sqr--);
                         break;
                     case 'p':
-                        m_bitboards[Piece::BPawn] |= square(sqr--);
+                        bitboard(Piece::BPawn) |= square(sqr--);
                         break;
                     case 'R':
-                        m_bitboards[Piece::WRook] |= square(sqr--);
+                        bitboard(Piece::WRook) |= square(sqr--);
                         break;
                     case 'N':
-                        m_bitboards[Piece::WKnight] |= square(sqr--);
+                        bitboard(Piece::WKnight) |= square(sqr--);
                         break;
                     case 'B':
-                        m_bitboards[Piece::WBishop] |= square(sqr--);
+                        bitboard(Piece::WBishop) |= square(sqr--);
                         break;
                     case 'Q':
-                        m_bitboards[Piece::WQueen] |= square(sqr--);
+                        bitboard(Piece::WQueen) |= square(sqr--);
                         break;
                     case 'K':
-                        m_bitboards[Piece::WKing] |= square(sqr--);
+                        bitboard(Piece::WKing) |= square(sqr--);
                         break;
                     case 'P':
-                        m_bitboards[Piece::WPawn] |= square(sqr--);
+                        bitboard(Piece::WPawn) |= square(sqr--);
                         break;
                     case '/':
                         break;
@@ -933,15 +952,13 @@ namespace chess
                 }
             }
 
-            m_bitboards[Color::White] =
-                    m_bitboards[Piece::WPawn] | m_bitboards[Piece::WRook] | m_bitboards[Piece::WKnight] | m_bitboards[Piece::WBishop] |
-                    m_bitboards[Piece::WQueen] | m_bitboards[Piece::WKing];
+            bitboard(Color::White) = bitboard(Piece::WPawn) | bitboard(Piece::WRook) | bitboard(Piece::WKnight) | bitboard(Piece::WBishop) |
+                                     bitboard(Piece::WQueen) | bitboard(Piece::WKing);
 
-            m_bitboards[Color::Black] =
-                    m_bitboards[Piece::BPawn] | m_bitboards[Piece::BRook] | m_bitboards[Piece::BKnight] | m_bitboards[Piece::BBishop] |
-                    m_bitboards[Piece::BQueen] | m_bitboards[Piece::BKing];
+            bitboard(Color::Black) = bitboard(Piece::BPawn) | bitboard(Piece::BRook) | bitboard(Piece::BKnight) | bitboard(Piece::BBishop) |
+                                     bitboard(Piece::BQueen) | bitboard(Piece::BKing);
 
-            m_bitboards[Piece::None] = ~m_bitboards[Color::White] & ~m_bitboards[Color::Black];
+            bitboard(Piece::None) = ~bitboard(Color::White) & ~bitboard(Color::Black);
 
             ss >> token;
             m_turn = token == "w" ? Color::White : Color::Black;
@@ -970,7 +987,7 @@ namespace chess
                         const auto file = File(f);
                         const auto rank = Rank(r);
                         const auto sqr = square(file, rank);
-                        if (sqr & m_bitboards[C])
+                        if (sqr & bitboard(C))
                         {
                             const auto p = piece(sqr);
                             if (p != Piece::None && moves(p, file, rank)) return false;
@@ -1016,7 +1033,7 @@ namespace chess
             {
                 ss << r + 1 << " |";
                 for (int f = 0; f < 8; f++)
-                    ss << " " << s_pieceChars[piece(square(File(f), Rank(r)))] << " |";
+                    ss << " " << s_pieceChars[std::to_underlying(piece(square(File(f), Rank(r))))] << " |";
 
                 ss << " " << r + 1 << "\n";
                 ss << "  +---+---+---+---+---+---+---+---+\n";

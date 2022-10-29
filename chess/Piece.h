@@ -1,13 +1,13 @@
 #ifndef CHESS_ENGINE_PIECE_H
 #define CHESS_ENGINE_PIECE_H
 
+#include <utility>
+
 namespace chess
 {
-    enum Color { White = 0, Black = 8 };
+    enum class Color : unsigned char { White = 0, Black = 8 };
 
-    constexpr Color operator~(Color c) noexcept { return Color(c ^ Color::Black); }
-
-    enum Piece
+    enum class Piece : unsigned char
     {
         WPawn = 1,
 
@@ -15,13 +15,15 @@ namespace chess
 
         None,
 
-        BPawn = WPawn + Black,
+        BPawn = Piece::WPawn + std::to_underlying(Color::Black),
 
         BKnight, BRook, BBishop, BQueen, BKing
     };
 
-    namespace ColoredPiece
+    namespace Colored
     {
+        template<Color C> constexpr Color Opposite = C == Color::White ? Color::Black : Color::White;
+
         template<Color C> constexpr Piece Pawn = C == Color::White ? Piece::WPawn : Piece::BPawn;
         template<Color C> constexpr Piece Knight = C == Color::White ? Piece::WKnight : Piece::BKnight;
         template<Color C> constexpr Piece Rook = C == Color::White ? Piece::WRook : Piece::BRook;
@@ -36,17 +38,17 @@ namespace chess
         switch (c)
         {
             case 'p':
-                return ColoredPiece::Pawn<C>;
+                return Colored::Pawn<C>;
             case 'n':
-                return ColoredPiece::Knight<C>;
+                return Colored::Knight<C>;
             case 'r':
-                return ColoredPiece::Rook<C>;
+                return Colored::Rook<C>;
             case 'b':
-                return ColoredPiece::Bishop<C>;
+                return Colored::Bishop<C>;
             case 'q':
-                return ColoredPiece::Queen<C>;
+                return Colored::Queen<C>;
             case 'k':
-                return ColoredPiece::King<C>;
+                return Colored::King<C>;
             default:
                 return Piece::None;
         }

@@ -3,7 +3,7 @@
 
 namespace chess
 {
-    enum File
+    enum class File : unsigned char
     {
         A, B, C, D, E, F, G, H
     };

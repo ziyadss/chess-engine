@@ -3,7 +3,7 @@
 
 namespace chess
 {
-    enum class Result
+    enum class Result : unsigned char
     {
         LegalMove, IllegalMove, WhiteWin, BlackWin, Draw
     };

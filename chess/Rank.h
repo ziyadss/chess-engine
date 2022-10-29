@@ -3,7 +3,7 @@
 
 namespace chess
 {
-    enum Rank
+    enum class Rank : unsigned char
     {
         One, Two, Three, Four, Five, Six, Seven, Eight
     };
