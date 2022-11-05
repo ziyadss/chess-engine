@@ -69,6 +69,7 @@ namespace chess
         template<Color C>
         [[nodiscard]] constexpr bool inCheck() const noexcept
         {
+            // TODO: Validate post-move that the king is not in check.
             const auto king = Colored::King<C>;
             const auto [f, r] = find<king>();
 
