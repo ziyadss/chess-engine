@@ -17,9 +17,9 @@ namespace chess
         static_assert(sizeof(bitboard_t) == 8, "bitboard_t must be 64 bits");
 
         std::array<bitboard_t, 15> m_bitboards;
-        Color m_turn = Color::White;
-        bitboard_t m_enPassantSquare = s_emptyBoard;
-        std::array<bool, 4> m_castling{true, true, true, true}; // KQkq
+        Color m_turn;
+        bitboard_t m_enPassantSquare;
+        std::array<bool, 4> m_castling; // KQkq
 
         [[nodiscard]] constexpr bitboard_t bitboard(Piece p) const noexcept { return m_bitboards[std::to_underlying(p)]; }
         [[nodiscard]] constexpr bitboard_t bitboard(Color c) const noexcept { return m_bitboards[std::to_underlying(c)]; }
@@ -813,7 +813,11 @@ namespace chess
                   SquareRays{0x0000000000000000, 0x0200000000000000, 0x0200000000000000},
                   SquareRays{0x0000000000000000, 0x0000000000000000, 0x0000000000000000}}}};
     public:
-        constexpr Board() noexcept: m_bitboards(s_startingPosition) {}
+        constexpr Board() noexcept: m_bitboards(s_startingPosition),
+                                    m_turn(Color::White),
+                                    m_enPassantSquare(s_emptyBoard),
+                                    m_castling({true, true, true, true}) {}
+
         explicit constexpr Board(const std::string &fenString) { set(fenString); }
 
         [[nodiscard]] std::string fen() const
