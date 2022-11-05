@@ -300,9 +300,6 @@ namespace chess
         {
             const auto fromSquare = square(fromFile, fromRank);
             const auto fromPiece = piece(fromSquare);
-
-            const auto legalMoves = moves(fromPiece, fromFile, fromRank);
-
             const auto toSquare = square(toFile, toRank);
 
             const auto king = Colored::King<C>;
@@ -347,9 +344,10 @@ namespace chess
                 }
             }
 
+            const auto legalMoves = moves(fromPiece, fromFile, fromRank);
             if ((legalMoves & toSquare) == s_emptyBoard) { return false; }
-            const auto toPiece = piece(toSquare);
 
+            const auto toPiece = piece(toSquare);
             const bool promotion = fromPiece == Colored::Pawn<C> && toRank == Rank::Eight;
             if (!promotion)
             {
@@ -369,6 +367,7 @@ namespace chess
                         newPiece == Colored::Queen<C> || newPiece == Colored::Bishop<C> || newPiece == Colored::Rook<C> ||
                         newPiece == Colored::Knight<C>;
                 if (!validPromotion) { return false; }
+
                 promote<C>(fromSquare, fromPiece, toSquare, toPiece, newPiece);
                 m_enPassantSquare = s_emptyBoard;
                 return true;
