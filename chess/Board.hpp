@@ -13,7 +13,7 @@ namespace chess
 {
     class Board
     {
-        using bitboard_t = uint64_t;
+        using bitboard_t = unsigned long long;
         static_assert(sizeof(bitboard_t) == 8, "bitboard_t must be 64 bits");
 
         std::array<bitboard_t, 15> m_bitboards;
